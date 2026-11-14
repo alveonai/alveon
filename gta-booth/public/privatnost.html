@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0716">
+  <title>Privatnost</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .wrap h2 { margin-top: 22px; font-size: 20px; }
+    .wrap p, .wrap li { color: var(--text); margin-top: 8px; }
+    .wrap ul { margin-left: 20px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="brand" style="font-size:30px">Obaveštenje o privatnosti</div>
+    <p class="sub">Foto-štand „Uđi u igru”</p>
+
+    <h2>Ko obrađuje podatke</h2>
+    <p>Rukovalac podacima je <b data-cfg="controller">[NAZIV FIRME]</b>.
+      Kontakt za sva pitanja o privatnosti: <b data-cfg="contactEmail">[EMAIL]</b>.</p>
+
+    <h2>Koje podatke obrađujemo i zašto</h2>
+    <ul>
+      <li>Tvoju fotografiju, isključivo da bismo od nje napravili stilizovanu sliku u stilu video igre.</li>
+      <li>Vreme davanja pristanka i potvrdu da imaš 18 ili više godina, kao dokaz pristanka.</li>
+      <li>Ne tražimo tvoje ime, e-mail ni broj telefona. Metapodaci fotografije (lokacija, uređaj) uklanjaju se na tvom telefonu pre slanja.</li>
+    </ul>
+    <p>Pravni osnov je tvoj pristanak. Objava slike na društvenim mrežama organizatora moguća je samo ako si za to dao poseban pristanak.</p>
+
+    <h2>Ko još prima fotografiju</h2>
+    <ul>
+      <li><b>Google (Gemini API)</b> obrađuje fotografiju kao naš obrađivač, da bi generisao sliku.
+        Na plaćenoj usluzi koju koristimo Google <b>ne koristi</b> fotografije ni rezultate za treniranje ili poboljšanje svojih modela.
+        Radi sprečavanja zloupotreba Google može čuvati zahtev i rezultat do 55 dana; podaci mogu biti privremeno obrađivani u zemljama u kojima Google ima infrastrukturu, uključujući SAD.</li>
+      <li><b>Cloudflare</b> hostuje ovu aplikaciju i čuva fotografije do brisanja.</li>
+    </ul>
+
+    <h2>Koliko dugo čuvamo podatke</h2>
+    <ul>
+      <li>Fotografija koja ne bude odobrena na štandu briše se najkasnije za <span data-cfg="pendingTtlMin">15</span> minuta, a odbijena odmah.</li>
+      <li>Originalna fotografija briše se najkasnije <span data-cfg="originalTtlMin">60</span> minuta posle generisanja.</li>
+      <li>Gotova slika i zapis o pristanku brišu se posle <span data-cfg="retentionDays">7</span> dana.</li>
+    </ul>
+
+    <h2>Tvoja prava</h2>
+    <p>Pristanak možeš povući u svakom trenutku: dugmetom „Obriši moje podatke” na dnu svoje stranice ili porukom na kontakt adresu iznad.
+      Imaš pravo na pristup, ispravku i brisanje podataka, kao i pravo da podneseš pritužbu Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti (www.poverenik.rs).</p>
+
+    <h2>Uzrast</h2>
+    <p>Usluga je namenjena isključivo osobama koje imaju 18 ili više godina.</p>
+
+    <p class="notice" style="margin-top:26px">
+      <a href="/">← Nazad</a>
+    </p>
+  </main>
+  <script>
+    fetch('/api/config', { cache: 'no-store' }).then((r) => r.json()).then((cfg) => {
+      document.querySelectorAll('[data-cfg]').forEach((el) => {
+        const v = cfg[el.dataset.cfg];
+        if (v !== undefined && v !== null && v !== '') el.textContent = v;
+      });
+    }).catch(() => {});
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+name = "gta-booth"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Statični fajlovi (stranica za goste, tablet, privatnost).
+# /api/* uvek ide na Worker.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# Baza: sesije, statusi, brojač generacija.
+# Posle `wrangler d1 create gta-booth-db` upišite pravi database_id.
+[[d1_databases]]
+binding = "DB"
+database_name = "gta-booth-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# Skladište slika (originali i rezultati).
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "gta-booth-photos"
+
+# Čišćenje na svakih 5 minuta: istekli zahtevi, originali, stare slike.
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+# "mock" = demo režim (vraća originalnu sliku, ne troši ništa).
+# "gemini" = pravo generisanje preko Google Gemini API-ja.
+PROVIDER = "mock"
+GEMINI_MODEL = "gemini-nano-banana-2.1"
+IMAGE_SIZE = "2K"
+ASPECT_RATIO = "3:4"
+
+# Limit generacija po danu (vreme po Beogradu). 300 ljudi + 20% rezerve.
+DAILY_LIMIT = "360"
+# Cena po slici u USD (Nano Banana 2.1, 2K) – samo za prikaz na tabletu.
+COST_PER_IMAGE_USD = "0.0504"
+# Koliko pokušaja generisanja po gostu (1 + 1 automatski ponovni).
+MAX_ATTEMPTS = "2"
+
+# Najviše zahteva koji istovremeno čekaju odobrenje.
+MAX_PENDING = "40"
+# Neodobrene slike se brišu posle ovoliko minuta.
+PENDING_TTL_MIN = "15"
+# Original se briše ovoliko minuta posle uspešnog generisanja.
+ORIGINAL_TTL_MIN = "60"
+# Rezultati i svi podaci se brišu posle ovoliko dana.
+RETENTION_DAYS = "7"
+
+# Podaci za obaveštenje o privatnosti (popuniti pre eventa).
+CONTROLLER_NAME = "[NAZIV FIRME]"
+CONTACT_EMAIL = "[EMAIL ZA PRIVATNOST]"
+
+# Demo režim: koliko traje "generisanje".
+MOCK_DELAY_MS = "4000"
+
+# Tajne (NE upisivati ovde), postavljaju se komandom:
+#   npx wrangler secret put ADMIN_PIN
+#   npx wrangler secret put GEMINI_API_KEY
+# Za lokalni rad: fajl .dev.vars (vidi .dev.vars.example).

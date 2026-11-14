@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0716">
+  <meta name="robots" content="noindex">
+  <title>Štand – odobravanje</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .wrap { max-width: 1200px; }
+    .top {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 5; padding: 10px 0; background: var(--bg);
+    }
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-weight: 700; }
+    .stat small { display: block; color: var(--muted); font-weight: 500; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-top: 12px; }
+    .item { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px; }
+    .item.new { border-color: var(--yellow); box-shadow: 0 0 0 2px var(--yellow); }
+    .item img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 10px; background: #000; display: block; }
+    .item .code { font-size: 40px; margin: 6px 0 2px; }
+    .item .meta { color: var(--muted); font-size: 14px; text-align: center; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .actions .btn { margin: 0; min-height: 60px; font-size: 20px; }
+    .btn.ok { background: var(--green); }
+    .btn.no { background: var(--red); color: #fff; }
+    .chip { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 800; }
+    .chip.generating, .chip.approved { background: var(--orange); color: #1a0b22; }
+    .chip.done { background: var(--green); color: #1a0b22; }
+    .chip.failed, .chip.limit { background: var(--red); color: #fff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    td { padding: 8px 6px; border-top: 1px solid var(--line); vertical-align: middle; font-size: 15px; }
+    td.c { font-weight: 900; font-size: 20px; letter-spacing: .08em; }
+    td .err { color: var(--muted); font-size: 13px; }
+    .row-actions .btn { min-height: 38px; font-size: 14px; margin: 0; width: auto; display: inline-flex; padding: 6px 12px; }
+    .empty { color: var(--muted); padding: 30px; text-align: center; border: 2px dashed var(--line); border-radius: 16px; margin-top: 12px; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toolbar .btn { width: auto; margin: 0; min-height: 44px; font-size: 15px; }
+    .paused-banner { background: var(--red); color: #fff; font-weight: 800; text-align: center; padding: 10px; border-radius: 12px; margin-top: 10px; }
+    .offline { background: var(--yellow); color: #1a0b22; font-weight: 800; text-align: center; padding: 8px; border-radius: 12px; margin-top: 10px; }
+    #login { max-width: 380px; margin: 40px auto; }
+    #pin { width: 100%; font: inherit; font-size: 28px; letter-spacing: .3em; text-align: center; padding: 12px; border-radius: 12px; border: 2px solid var(--line); background: #0d0820; color: var(--text); }
+    .thumbresult { width: 44px; height: 58px; object-fit: cover; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section id="login" class="card hidden">
+      <h2>Prijava za štand</h2>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN">
+      <button class="btn" id="b-login">Prijavi se</button>
+      <p class="error hidden" id="e-login"></p>
+    </section>
+
+    <section id="app" class="hidden">
+      <div class="top">
+        <div class="brand" style="font-size:28px">Štand</div>
+        <div class="stats">
+          <div class="stat"><small>Danas generisano</small><span id="s-used">0</span> / <span id="s-limit">0</span></div>
+          <div class="stat"><small>Procena troška</small>$<span id="s-cost">0</span></div>
+          <div class="stat"><small>Na čekanju</small><span id="s-pending">0</span></div>
+          <div class="stat" id="s-mode"><small>Režim</small><span id="s-modeText">–</span></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn secondary" id="b-pause">⏸ Pauziraj</button>
+          <button class="btn secondary" id="b-sound">🔔 Zvuk: uključen</button>
+          <a class="btn secondary" href="/qr.html" target="_blank">QR za štand</a>
+        </div>
+      </div>
+      <div id="pausedBanner" class="paused-banner hidden">PAUZIRANO – gosti ne mogu da šalju nove slike</div>
+      <div id="offlineBanner" class="offline hidden">Nema veze sa serverom – proveri internet</div>
+
+      <h2 style="margin-top:16px">Čekaju odobrenje</h2>
+      <div id="pendingGrid" class="grid"></div>
+      <div id="pendingEmpty" class="empty">Nema novih zahteva.</div>
+
+      <h2 style="margin-top:28px">U obradi i gotovo</h2>
+      <table><tbody id="recentBody"></tbody></table>
+
+      <div class="card" style="margin-top:40px">
+        <h2>Kraj eventa</h2>
+        <p class="notice">Trajno briše sve fotografije, slike i zapise sa servera. Gosti posle ovoga ne mogu da preuzmu slike.</p>
+        <button class="btn no" id="b-purge" style="max-width:340px">Obriši sve podatke</button>
+      </div>
+    </section>
+  </main>
+  <script src="/admin.js"></script>
+</body>
+</html>

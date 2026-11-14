@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0716">
+  <meta name="robots" content="noindex">
+  <title>Uđi u igru</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="brand">Uđi<br>u igru</div>
+      <p class="sub">Postani lik iz akcione video igre. <span id="demoBadge" class="badge hidden">DEMO</span></p>
+    </header>
+
+    <!-- Učitavanje -->
+    <section id="v-loading" class="card center">
+      <div class="spinner"></div>
+      <p class="muted">Učitavanje…</p>
+    </section>
+
+    <!-- Pristanak -->
+    <section id="v-consent" class="card hidden">
+      <h2>Pre nego što počnemo</h2>
+      <p class="notice">
+        Tvoju fotografiju obrađujemo AI alatom (Google Gemini API) samo da bismo napravili tvoju stilizovanu sliku.
+        Google je ne koristi za treniranje AI modela, ali je radi bezbednosti može čuvati do 55 dana.
+        Originalnu fotografiju brišemo najkasnije <span data-cfg="originalTtlMin">60</span> min posle generisanja,
+        a gotovu sliku za <span data-cfg="retentionDays">7</span> dana.
+        Pristanak možeš povući bilo kada.
+        <a href="/privatnost.html" target="_blank">Sve o privatnosti</a>
+      </p>
+      <div style="margin-top:12px">
+        <label class="check">
+          <input type="checkbox" id="c-age">
+          <span><b>Imam 18 ili više godina.</b></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="c-consent">
+          <span><b>Pristajem na obradu moje fotografije AI alatom.</b>
+            <small>Obavezno za učešće.</small></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="c-social">
+          <span>Pristajem da se moja slika objavi na društvenim mrežama organizatora.
+            <small>Nije obavezno.</small></span>
+        </label>
+      </div>
+      <button class="btn" id="b-consent" disabled>Nastavi</button>
+      <p class="error hidden" id="e-consent"></p>
+    </section>
+
+    <!-- Slikanje -->
+    <section id="v-capture" class="card hidden">
+      <h2>Slikaj se</h2>
+      <ul class="tips">
+        <li>Lice dobro osvetljeno, gledaj u kameru</li>
+        <li>Od struka naviše, bez naočara za sunce</li>
+        <li>Samo jedna osoba na slici</li>
+      </ul>
+      <label class="btn" for="f-camera">📸 Otvori kameru</label>
+      <label class="btn secondary small" for="f-gallery">Izaberi iz galerije</label>
+      <input type="file" id="f-camera" accept="image/*" capture="user">
+      <input type="file" id="f-gallery" accept="image/*">
+      <div id="previewBox" class="hidden">
+        <img id="preview" class="preview" alt="Pregled tvoje fotografije">
+        <button class="btn" id="b-send">Pošalji na odobrenje</button>
+        <button class="btn secondary small" id="b-retake">Slikaj ponovo</button>
+      </div>
+      <p class="error hidden" id="e-capture"></p>
+    </section>
+
+    <!-- Čeka odobrenje -->
+    <section id="v-pending" class="card center hidden">
+      <h2>Čeka se potvrda sa štanda</h2>
+      <p class="muted">Pokaži ovaj kod osoblju:</p>
+      <div class="code" id="code-pending">···</div>
+      <p class="muted" id="queueInfo"></p>
+      <div class="spinner"></div>
+      <button class="btn secondary small" id="b-change">Promeni fotografiju</button>
+    </section>
+
+    <!-- Generisanje -->
+    <section id="v-generating" class="card center hidden">
+      <h2>Pravimo tvoj lik…</h2>
+      <div class="spinner"></div>
+      <p class="muted" id="genText">Ovo traje do jednog minuta.</p>
+      <p class="muted">Kod: <b id="code-gen"></b></p>
+    </section>
+
+    <!-- Gotovo -->
+    <section id="v-done" class="card center hidden">
+      <h2>Spreman si za igru! 🌴</h2>
+      <img id="result" class="result" alt="Tvoja stilizovana slika">
+      <button class="btn" id="b-save">⬇️ Sačuvaj sliku</button>
+      <p class="notice" style="margin-top:10px">
+        Ako dugme ne radi: pritisni i drži sliku, pa izaberi „Sačuvaj sliku”.
+        Link važi <span data-cfg="retentionDays">7</span> dana.
+      </p>
+    </section>
+
+    <!-- Odbijeno -->
+    <section id="v-rejected" class="card center hidden">
+      <h2>Fotografija nije odobrena</h2>
+      <p class="muted">Pokušaj ponovo, uz savete osoblja na štandu.</p>
+      <button class="btn" id="b-again">Slikaj ponovo</button>
+    </section>
+
+    <!-- Greška / limit / isteklo / pauza -->
+    <section id="v-message" class="card center hidden">
+      <h2 id="msgTitle"></h2>
+      <p class="muted" id="msgText"></p>
+      <button class="btn secondary small hidden" id="b-restart">Počni ispočetka</button>
+    </section>
+
+    <footer>
+      <a href="/privatnost.html" target="_blank">Privatnost</a>
+      <span id="deleteWrap" class="hidden"> · <a href="#" id="b-delete">Obriši moje podatke</a></span>
+    </footer>
+  </main>
+  <script src="/guest.js"></script>
+</body>
+</html>

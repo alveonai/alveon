@@ -1,0 +1,3 @@
+# Kopirati u .dev.vars za lokalni rad (wrangler dev). .dev.vars se NE commituje.
+ADMIN_PIN=123456
+# GEMINI_API_KEY=...   (samo ako se lokalno testira PROVIDER=gemini)

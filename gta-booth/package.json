@@ -1,0 +1,19 @@
+{
+  "name": "gta-booth",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:local": "wrangler d1 execute gta-booth-db --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute gta-booth-db --remote --file=schema.sql",
+    "deploy": "wrangler deploy",
+    "test:e2e": "node scripts/e2e.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "3.3.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.162.0"
+  }
+}
