@@ -6,6 +6,7 @@ Sve za projekat je u ovom folderu.
 |---|---|
 | **Aplikacija** (kod) | `gta-booth/` |
 | **Plan aplikacije** (sve odluke, arhitektura, rizici) | `gta-booth/PLAN.md` |
+| **Pokretanje bez Claude-a (pravi AI + telefon)** | `gta-booth/POKRETANJE.md` |
 | **Lokalno testiranje, korak po korak** | `gta-booth/TESTIRANJE.md` |
 | **Postavljanje na Cloudflare i kontrolna lista za event** | `gta-booth/README.md` |
 | **Odgovor nezavisnog recenzenta** (na plan v1) | `gta-booth/docs/recenzija-1.md` |
