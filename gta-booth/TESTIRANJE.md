@@ -90,8 +90,14 @@ Testovi grešaka, limita i Google 429 su u `README.md`.
 Kad dobijete Google ključ (projekat sa billingom, logovanje isključeno):
 
 1. U `.dev.vars` dodajte red `GEMINI_API_KEY=vaš-ključ`.
-2. Pokrenite: `npx wrangler dev --var PROVIDER:gemini`
+2. Pokrenite: `npm run dev:live`
 3. Tablet tada pokazuje režim **UŽIVO**.
+
+**Billing je obavezan.** Na besplatnom nivou Google za modele za slike daje kvotu 0
+(provereno 14. 11. 2026): tablet piše „Google preopterećen” i nijedna slika ne nastaje.
+
+Automatske testove (`npm run test:e2e`) pokrećite samo uz `npm run dev` (demo), nikad uz
+`dev:live`, i posle „Obriši sve podatke” na tabletu (zaostali zahtevi menjaju poziciju u redu).
 
 Ovo je način da se testira prompt pre postavljanja na Cloudflare.
 

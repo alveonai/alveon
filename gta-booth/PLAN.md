@@ -287,18 +287,32 @@ Tablet (`Authorization: Bearer <token>`):
 - Ako odgovor nema sliku (bezbednosni filter i sl.): greška sa razlogom (`blockReason` / `finishReason`), uz automatski ponovni pokušaj.
 - Rezultat se čuva u R2 i servira gostu sa našeg domena (gost nikad ne komunicira direktno sa Googleom).
 
-**Prompt** (`src/prompt.js`, doslovno; v2: bez reči „crime”, očuvanje lica na početku):
+**Prompt v3** (`src/prompt.js`, doslovno; 14. 11. 2026, **prompt agencije**, ubačen tačno kako je dat, bez dodataka, na izričit zahtev agencije):
 ```
-Keep the person in this photo clearly recognizable: same face, facial features, skin tone, hairstyle, hair color, glasses, facial hair, and the same clothing and colors. Do not change age, gender or body type. Keep the same number of people.
-
-Turn the photo into a stylized illustration in the style of a classic open-world action video game loading screen artwork.
-
-Style: bold hand-painted digital illustration, strong clean ink outlines, cel-shaded skin with crisp highlights, slightly exaggerated confident pose, saturated sunset color palette (orange, magenta, purple sky), palm trees and a sunny coastal city skyline in the background, subtle halftone texture, poster composition.
-
-Keep the same aspect ratio, orientation, framing and camera distance as the original photo.
-
-Do not add any text, letters, logos, watermarks, weapons, drugs, alcohol or violence.
+Transform this image into a modern Grand Theft Auto VI-inspired visual style.
+Preserve the original composition, subject identity, pose, and facial features, but enhance it with a highly polished, next-gen video game aesthetic.
+Apply:
+- Ultra-realistic rendering with cinematic lighting
+- High dynamic range (HDR), realistic shadows and reflections
+- Detailed skin textures and natural imperfections (not cartoonish)
+- Subtle stylization inspired by GTA VI character design (modern, grounded, semi-realistic - NOT exaggerated or comic-like)
+- Vibrant but controlled color grading (Miami/Vice City-inspired tones, warm highlights, teal
+shadows.
+- Depth of field and environmental atmosphere for immersion
+- Clean, sharp focus with AAA video game quality
+Environment:
+- If applicable, enhance background to feel like a living open-world city (modern Vice City vibe: neon lights, palm trees, urban luxury, night glow or sunset lighting)
+Important constraints:
+- Do NOT convert into cartoon, comic, or GTA V-style illustration
+- Avoid thick outlines or exaggerated proportions
+- Maintain realism with subtle stylization only
+- Keep the subject recognizable and authentic
+Final result:
+A cinematic, next-generation GTA VI-style render that looks like a scene from a modern AAA open-world game.
 ```
+Promene u odnosu na v2: stil je sada polurealistični „next-gen” render umesto ilustracije sa konturama; prompt **imenuje igru** (GTA VI, Vice City); **nema** zabrane teksta/logoa/oružja/droge/alkohola/nasilja ni redova „isti broj ljudi” i „ne menjati godine i pol”. Claude je predložio da se ti redovi dodaju na kraj; agencija je odlučila da ide samo njen tekst. Rizici: R5, R6, R15. U testu prompta posebno gledati: logo/natpis igre na slici, oružje, promenu godina, odbijanja zbog imena igre.
+
+Prethodni prompt (v2, ilustracija, bez imena igre) je u git istoriji (`src/prompt.js`).
 Prompt još **nije testiran** na pravom modelu (nema API ključa). **Test prompta je prvi zadatak čim postoji ključ**, jer od kvaliteta zavise ostale odluke:
 - 10–20 različitih fotografija: svetliji i tamniji ten, naočare, brada, marama ili kapa, dve osobe, slabo i mešovito svetlo kao u tržnom centru;
 - za svaku beležiti: prepoznatljivost (da/ne), odbijanje filtera (da/ne, razlog), **trajanje** (tipično i najsporije);
@@ -394,9 +408,16 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 5. **Pravi Gemini poziv sa lažnim ključem (v1):** Googleov server odgovorio „API key not valid”: SDK radi u Cloudflare runtime-u, greška ključa se ne ponavlja.
 6. **Browser test (Playwright):** emuliran iPhone 13 (gost) i tablet: ceo tok preko reda, dugme „QR za preuzimanje” prikazuje QR; bez JavaScript grešaka.
 
+**14. 11. 2026, lokalno na računaru agencije (Windows 11, Node 22):**
+
+7. `npm install`, `setup:local`, `dev`: radi; **e2e 57/57** (i posle promene prompta v3). Napomena: e2e očekuje praznu lokalnu bazu; zaostali zahtevi iz ručnog testa pomeraju poziciju u redu (2 lažna pada). Pre testa: tablet „Obriši sve podatke”.
+8. **Ručni test u browseru** (cela lista iz `TESTIRANJE.md`, gost + tablet): sve stavke rade (agencija).
+9. **Pravi telefon preko `cloudflared` tunela, telefon na mobilnom internetu, računar kao tablet** (demo režim, HTTPS): ceo tok radi (agencija).
+10. **Pravi Gemini ključ, besplatni nivo (bez billinga):** ključ važi, model `gemini-nano-banana-2.1` postoji (lista modela). Generisanje: **429, kvota `free_tier` = 0** zahteva/min i /dan za **sve** modele za slike (Nano Banana 2.1, 2, 2 Lite, Pro, 2.5). **Zaključak: bez billinga nema nijedne slike; test prompta zahteva plaćeni nivo.** Aplikacija je grešku obradila kao prolaznu 429 (tablet: „Google preopterećen, novi pokušaj uskoro”), vidi R24.
+
 **Nije testirano:**
-- pravo generisanje (kvalitet, prepoznatljivost, trajanje, filteri) i stvarni Gemini limiti;
-- pravi telefoni: iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app browser;
+- pravo generisanje (kvalitet, prepoznatljivost, trajanje, filteri) i stvarni Gemini limiti plaćenog nivoa;
+- telefoni: jedan telefon agencije prošao (9); preostalo: drugi OS (iOS/Android), Google Lens, Instagram in-app browser;
 - produkcijski Cloudflare (CPU, Queues, cron, domen);
 - rad pod opterećenjem (npr. 20 gostiju zaredom);
 - cron (isticanje, ponovno slanje zaglavljenih) kroz stvarni okidač: logika postoji, okidač nije pokrenut u testu.
@@ -413,8 +434,8 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | R20 | **Gemini limiti (RPM/RPD) nisu poznati.** Nizak limit u špicu daje 429. | 3 paralelna poziva, pauze 5–60 s bez trošenja pokušaja. Limiti se proveravaju u nedelju; po potrebi zahtev za povećanje. |
 | R21 | Cloudflare Queues: kašnjenje isporuke i ponašanje u produkciji nisu provereni (samo lokalno). | Proveriti u nedelju posle postavljanja; cron je zaštitna mreža. |
 | R4 | Uslov Gemini-ja „likely to be accessed by individuals under 18”: javni QR u tržnom centru mogu da skeniraju i maloletnici. | Kućica + odobravanje + tabla 18+. Pravnik treba da potvrdi da je dovoljno. |
-| R5 | Bezbednosni filteri modela mogu odbiti neke fotografije (npr. ako izgleda kao da je osoba mlada). | Prompt bez reči „crime”; zadržano „Do not change age”. Automatski ponovni pokušaj; poruka osoblju. Meri se u testu prompta. |
-| R6 | Kvalitet i prepoznatljivost lica nisu provereni. | Prompt sa očuvanjem lica na početku; test na 10–20 slika; ring svetlo na štandu. |
+| R5 | Bezbednosni filteri modela mogu odbiti neke fotografije (npr. ako izgleda kao da je osoba mlada), a prompt v3 imenuje igru, što može dati dodatna odbijanja. | Prompt v3 nema „Do not change age” ni zabranu oružja/logoa (odluka agencije, 9). Automatski ponovni pokušaj; poruka osoblju. Meri se u testu prompta; ako ima odbijanja ili logoa/oružja, vratiti zaštitne redove. |
+| R6 | Kvalitet i prepoznatljivost lica nisu provereni. | Prompt v3: „Preserve … subject identity … facial features”, „Keep the subject recognizable”; test na 10–20 slika; ring svetlo na štandu. |
 | R7 | Signal u tržnom centru. | Smanjivanje slike na telefonu; sopstveni 4G ruter za tablet. |
 | R8 | Ugrađeni browseri aplikacija za QR (Instagram, neki Android skeneri) imaju probleme sa kamerom ili preuzimanjem; `localStorage` im je odvojen. | Slika se preuzima pre klika; „pritisni i drži” kao ravnopravna opcija; **QR za preuzimanje** na tabletu. Testirati na stvarnim uređajima (14). |
 | R9 | HEIC fotografije iz iPhone galerije. | Safari obično konvertuje u JPEG; postoji poruka greške ako dekodiranje ne uspe. Netestirano. |
@@ -425,7 +446,8 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | R23 | Najbliži podržani format nije uvek tačan format fotografije (npr. 1080×1350 je tačno 4:5, ali neobičan format se zaokružuje). | Razlika je mala; slika se ne seče, model kadrira u izabranom formatu. |
 | R13 | Nema serverske provere da je na slici jedna punoletna osoba; oslanja se na osoblje. | Svesna odluka. |
 | R14 | „Obriši sve podatke” je nepovratno. | Potvrda upisom reči. |
-| R15 | Rukovanje brendom/zaštićenim znakom igre i pravo na korišćenje teme. | Aplikacija ne koristi ime ni logo; licenca eventa nepoznata. |
+| R15 | Rukovanje brendom/zaštićenim znakom igre i pravo na korišćenje teme. | Stranice ne prikazuju ime ni logo. **Prompt v3 imenuje igru** (GTA VI, Vice City) i ne zabranjuje logo/natpis, pa model može da doda zaštićeni logo na slike gostiju. Licenca eventa nepoznata (16, pitanje 1). Proveriti u testu prompta. |
+| R24 | Iscrpljena ili nulta Gemini kvota (npr. dnevna, ili besplatni nivo) vraća 429 kao i gužva; aplikacija je tretira kao prolaznu: ~2 min ponavljanja, pa „preopterećen”. Osoblje bi čekalo nešto što neće proći. | Predlog: poruke sa „per day” / „limit: 0” odmah u `failed` sa jasnom porukom „kvota iscrpljena”. Čeka odluku agencije. |
 | R16 | Rok: 4 dana, uključujući vikend. | Rezervni plan: ručno generisanje na štandu. |
 | R17 | Kod trenutno nije na GitHub-u (Claude nema push pristup repozitorijumu agencije). | Lokalni commit i zip postoje; rešava agencija. |
 
@@ -461,8 +483,8 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | Dan | Zadaci |
 |---|---|
 | Pet 13. 11. | Odluke (provajder, arhitektura) |
-| Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi |
-| Ned 15. 11. | **Prvo:** Google projekat sa billingom, logovanje isključeno, ključ → **test prompta** (10–20 slika, trajanje, odbijanja) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
+| Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi; ✅ lokalno na računaru agencije (57/57, ručni test, telefon preko tunela); ✅ ključ besplatnog nivoa: kvota za slike 0 (14, tačka 10); ✅ prompt v3 (agencija) |
+| Ned 15. 11. | **Prvo:** uključiti billing na Google projektu (bez njega nema slika), logovanje isključeno → **test prompta v3** (10–20 slika, trajanje, odbijanja, logo/oružje) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
 | Pon 16. 11. | Test na pravim telefonima (uputstvo: `TESTIRANJE.md`): iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen |
 | Uto 17. 11. | Proba u tržnom centru (signal, ring svetlo, QR); zaključavanje koda uveče |
 | Sre 18. 11. | Event |
