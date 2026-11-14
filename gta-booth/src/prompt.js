@@ -7,6 +7,8 @@ export const STYLE_PROMPT = `Keep the person in this photo clearly recognizable:
 
 Turn the photo into a stylized illustration in the style of a classic open-world action video game loading screen artwork.
 
-Style: bold hand-painted digital illustration, strong clean ink outlines, cel-shaded skin with crisp highlights, slightly exaggerated confident pose, saturated sunset color palette (orange, magenta, purple sky), palm trees and a sunny coastal city skyline in the background, subtle halftone texture, poster composition, vertical framing from the waist up.
+Style: bold hand-painted digital illustration, strong clean ink outlines, cel-shaded skin with crisp highlights, slightly exaggerated confident pose, saturated sunset color palette (orange, magenta, purple sky), palm trees and a sunny coastal city skyline in the background, subtle halftone texture, poster composition.
+
+Keep the same aspect ratio, orientation, framing and camera distance as the original photo.
 
 Do not add any text, letters, logos, watermarks, weapons, drugs, alcohol or violence.`;

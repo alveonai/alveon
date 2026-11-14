@@ -15,12 +15,12 @@ Recenzent je video samo plan. Svaka stavka je proverena u kodu pre izmene.
 | 1 | Gost može da zameni fotografiju dok je osoblje gleda; ✅ bi poslao fotografiju koju niko nije video | **Tačno, kritično** (ključ je bio uvek `photos/<id>`, odobravanje ga nije proveravalo) | Svaka fotografija ima svoj ključ (verziju). Tablet šalje ključ koji je video; `approve`/`reject` su atomični `UPDATE … AND photo_key=?`, inače **409 „Fotografija je promenjena”**. Tablet učitava sliku samo za tu verziju. Testirano. |
 | 2 | Brisanje (gost ili „Obriši sve”) tokom generisanja: rezultat se ipak upiše | **Tačno, kritično** (upis `done` nije bio uslovljen) | Svi upisi posle AI poziva su uslovljeni „fencing” tokenom (`status='generating' AND attempts=? AND started_at=?`). Ako upis ne prođe, upravo snimljen rezultat se odmah briše. `purge` prvo briše bazu, pa fajlove. Testirano za oba slučaja, uz proveru direktno u R2. |
 | 3 | Gemini limiti (429/503) i budžet koji ne zaustavlja trošak | **Tačno** (429 je trošio jedini ponovni pokušaj bez pauze; Google budžet samo upozorava) | 429/503 se ponavljaju posle 5/15/30/60 s, **ne troše** pokušaj i ne ulaze u brojač; posle toga `failed` sa porukom „Google je preopterećen”. Najviše 3 paralelna generisanja. Plan ispravljen: stvarni limit troška je `DAILY_LIMIT`. Provera limita u AI Studiju dodata u nedelju. Testirano. |
-| 4 | Kućica „OK za mreže” nema tok podataka ni dugoročni dokaz pristanka | **Tačno** | Izabrana opcija **B**: kućica je **isključena** podešavanjem (`SOCIAL_CONSENT_ENABLED="0"`), tekst o privatnosti usklađen. Ako agencija želi objavu, uključuje se uz dodatni posao (odeljak 3.7, pitanje 16.7). |
+| 4 | Kućica „OK za mreže” nema tok podataka ni dugoročni dokaz pristanka | **Tačno** | **Odluka agencije: nema objave na mrežama, samo preuzimanje.** Kućica je isključena (`SOCIAL_CONSENT_ENABLED="0"`), obaveštenje kaže da se slike ne objavljuju (3.7). |
 | 5 | Generisanje u HTTP zahtevu tableta je krhko; `waitUntil` nije rešenje | **Tačno** | Uvedeni **Cloudflare Queues**: ✅ samo upiše posao i odmah vrati odgovor; consumer generiše nezavisno od tableta i telefona. Rezervni pokretač sa telefona gosta **uklonjen**. Cron na 5 min ponovo šalje u red zaglavljene poslove. Testirano lokalno. |
 | 6.1 | Web Share na iOS-u mora biti u samom kliku | **Već rešeno** | Slika se preuzima kao `Blob` čim je status `done`, pre klika; u kliku se odmah poziva `share` bez čekanja mreže. |
 | 6.2 | Uputstvo „pritisni i drži” odmah, ne kao rezerva | **Delimično** (bilo je uvek vidljivo, ali kao „ako ne radi”) | Tekst preformulisan kao ravnopravna opcija („Ili: pritisni i drži…”). „Otvori u browseru” nije dodato (nema pouzdanog načina u svim ugrađenim browserima). |
 | 6.3 | Izgubljen link | **Tačno, korisno** | Na tabletu dugme **„QR za preuzimanje”** za svaki gotov rezultat (QR na `/#s=<id>`). QR biblioteka je u projektu, bez CDN-a. Testirano. |
-| 6.4 | Format 9:16 za story | **Odluka agencije** | Model podržava 9:16; menja se jednim podešavanjem (`ASPECT_RATIO`). Ostaje 3:4 dok agencija ne odluči (pitanje 16.8). |
+| 6.4 | Format 9:16 za story | **Odluka agencije: isti format kao ulazna fotografija** | Telefon šalje dimenzije fotografije, server bira najbliži format koji Gemini podržava i zadaje ga u `imageConfig.aspectRatio`; prompt to dodatno traži. Testirano. |
 | 7 | Prompt: bez reči „crime”, očuvanje lica na početak; test na 10–20 slika; ring svetlo | **Razumno** | Prompt izmenjen. Kriterijumi testa i ring svetlo dodati u plan. |
 
 ---
@@ -96,7 +96,7 @@ Pročitani su „Gemini API Additional Terms of Service” (na snazi od 23. 3. 2
 ### 3.4 Izabrano: Cloudflare (Workers + D1 + R2) kao hosting
 - Agencija ima „Alveon hosting”, ali postojeći repozitorijum sadrži samo statičnu stranicu, a nije poznato da li hosting podržava serverski kod. API ključ **mora** biti na serveru.
 - Cloudflare daje server, bazu (D1, SQLite), skladište fajlova (R2), red poslova (Queues), periodične zadatke (cron) i statične fajlove na jednom mestu, kod jednog provajdera; objava jednom komandom (`wrangler deploy`). Domen agencije se može povezati poddomenom.
-- Potreban je **Workers Paid** plan ($5/mes): besplatni plan ima 10 ms CPU po zahtevu, što nije dovoljno za kodiranje/dekodiranje slika od nekoliko MB.
+- **Workers Paid** plan ($5/mes), **potvrđeno od agencije**: besplatni plan ima 10 ms CPU po zahtevu, što nije dovoljno za kodiranje/dekodiranje slika od nekoliko MB.
 - Odbačeno: Higgsfield-ov „website builder” (gosti bi morali da se prijave Higgsfield nalogom), klasičan VPS (više održavanja).
 
 ### 3.5 Izabrano: odobravanje na tabletu (umesto jednokratnog QR koda po gostu)
@@ -121,8 +121,8 @@ A je izabrano jer je **odobravanje jedina stvarna provera uzrasta** (zahtev Gemi
 - Zaštitna mreža: cron na 5 min ponovo šalje u red sesije koje su `approved` duže od 2 min ili `generating` duže od 3 min.
 - Duplirane poruke su bezopasne: preuzimanje posla je atomično, a svi upisi uslovljeni (7.1).
 
-### 3.7 Isključeno: pristanak za objavu na društvenim mrežama
-Kućica je u v1 postojala, ali bez toka: nema izvoza slika za agenciju, a zapis o pristanku se briše posle 7 dana, iako objava ostaje trajno (rukovalac mora moći da dokaže pristanak dok je slika objavljena). U v2 je **isključena** (`SOCIAL_CONSENT_ENABLED="0"`), a obaveštenje kaže da se slike ne objavljuju. Ako agencija želi objavu, potrebno je: izvoz slika sa `consent_social=1` na tabletu, čuvanje zapisa o pristanku dok je slika objavljena, dopuna obaveštenja i način povlačenja pristanka za objavu.
+### 3.7 Odlučeno: bez objave na društvenim mrežama (samo preuzimanje)
+Kućica je u v1 postojala, ali bez toka: nema izvoza slika za agenciju, a zapis o pristanku se briše posle 7 dana, iako objava ostaje trajno (rukovalac mora moći da dokaže pristanak dok je slika objavljena). Agencija je odlučila: **nema objave, gost samo preuzima sliku.** Kućica je isključena (`SOCIAL_CONSENT_ENABLED="0"`), a obaveštenje kaže da se slike ne objavljuju. Ako bi se odluka ikad promenila, potrebno je: izvoz slika sa `consent_social=1` na tabletu, čuvanje zapisa o pristanku dok je slika objavljena, dopuna obaveštenja i način povlačenja pristanka za objavu.
 
 ---
 
@@ -155,6 +155,7 @@ Kućica je u v1 postojala, ali bez toka: nema izvoza slika za agenciju, a zapis 
 gta-booth/
   PLAN.md              ← ovaj dokument
   README.md            ← uputstvo za postavljanje i kontrolna lista za event
+  TESTIRANJE.md        ← lokalno testiranje korak po korak
   wrangler.toml        ← Cloudflare konfiguracija i podešavanja (vars)
   schema.sql           ← šema baze
   package.json         ← zavisnosti: @google/genai 3.3.0, wrangler 4.162.0
@@ -214,6 +215,7 @@ sessions(
   consent_social INTEGER /* uvek 0 dok je 3.7 isključeno */, age_confirmed INTEGER,
   submitted_at INTEGER,  -- kada je fotografija poslata na odobrenje
   photo_key TEXT,        -- R2 ključ sa verzijom: photos/<id>/<vreme>-<nasumično>
+  photo_aspect TEXT,     -- format fotografije (npr. "3:4"); isti se traži od AI-ja
   result_key TEXT,       -- results/<id>/<broj pokušaja>
   result_mime TEXT,
   attempts INTEGER, max_attempts INTEGER (default 2),
@@ -257,7 +259,7 @@ Gost (bez autentikacije; ID sesije je tajna):
 | GET | `/api/config` | Javna podešavanja (rukovalac, kontakt, rokovi, demo, pauza) |
 | POST | `/api/sessions` | `{age:true, consent:true, social:bool}` → `{id, code}`; 400 bez obaveznih; 503 ako je pauza |
 | GET | `/api/s/:id` | Status, kod, pozicija u redu, greška; lenjo ističe stare `pending` |
-| POST | `/api/s/:id/photo` | Telo `image/jpeg`, 1 KB–6 MB, mora počinjati sa `FF D8`; samo u `created/pending/rejected/expired`; 503 ako je red pun (40) ili pauza |
+| POST | `/api/s/:id/photo` | Telo `image/jpeg`, 1 KB–6 MB, mora počinjati sa `FF D8`; zaglavlje `x-photo-size: ŠxV` (opciono) određuje format izlaza; samo u `created/pending/rejected/expired`; 503 ako je red pun (40) ili pauza |
 | GET | `/api/s/:id/result` | Rezultat (samo kad je `done`) |
 | DELETE | `/api/s/:id` | Gost povlači pristanak: brisanje fajlova, status `deleted` |
 
@@ -279,7 +281,8 @@ Tablet (`Authorization: Bearer <token>`):
 
 ## 9. Generisanje slike
 
-- Model: `gemini-nano-banana-2.1`, `responseModalities: ['IMAGE']`, `imageConfig: { aspectRatio: '3:4', imageSize: '2K' }`, **`store: false`**, timeout 120 s (AbortController). Model podržava i `9:16` (pitanje 16.8).
+- Model: `gemini-nano-banana-2.1`, `responseModalities: ['IMAGE']`, `imageConfig: { aspectRatio: <format ulazne fotografije>, imageSize: '2K' }`, **`store: false`**, timeout 120 s (AbortController).
+- **Format izlazne slike = format ulazne** (odluka agencije). Telefon posle smanjivanja šalje dimenzije (`x-photo-size: 1200x1600`); server bira najbliži podržani format (`1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9`, poređenje u log razmeri) i čuva ga u `photo_aspect`. Primeri: iPhone 3024×4032 → 3:4, 1080×1920 → 9:16, 1600×1200 → 4:3. Ako dimenzije nisu poznate: `ASPECT_RATIO` (3:4). Samo prompt nije dovoljan, jer dokumentacija ne garantuje da model zadržava format ulaza.
 - Ulaz: tekst prompta + fotografija kao `inlineData` (JPEG, base64).
 - Ako odgovor nema sliku (bezbednosni filter i sl.): greška sa razlogom (`blockReason` / `finishReason`), uz automatski ponovni pokušaj.
 - Rezultat se čuva u R2 i servira gostu sa našeg domena (gost nikad ne komunicira direktno sa Googleom).
@@ -290,7 +293,9 @@ Keep the person in this photo clearly recognizable: same face, facial features, 
 
 Turn the photo into a stylized illustration in the style of a classic open-world action video game loading screen artwork.
 
-Style: bold hand-painted digital illustration, strong clean ink outlines, cel-shaded skin with crisp highlights, slightly exaggerated confident pose, saturated sunset color palette (orange, magenta, purple sky), palm trees and a sunny coastal city skyline in the background, subtle halftone texture, poster composition, vertical framing from the waist up.
+Style: bold hand-painted digital illustration, strong clean ink outlines, cel-shaded skin with crisp highlights, slightly exaggerated confident pose, saturated sunset color palette (orange, magenta, purple sky), palm trees and a sunny coastal city skyline in the background, subtle halftone texture, poster composition.
+
+Keep the same aspect ratio, orientation, framing and camera distance as the original photo.
 
 Do not add any text, letters, logos, watermarks, weapons, drugs, alcohol or violence.
 ```
@@ -379,8 +384,9 @@ Ako se doda „Probaj još jednom”: najviše ~$36 za Gemini.
 
 Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queues). Rezultati v2:
 
-1. **`scripts/e2e.mjs`: 54/54 provera.** Pristanak, validacija upload-a, auth tableta, red i kod, isključena kućica za mreže, verzija fotografije, odobravanje preko reda (odgovor < 2 s, generisanje ~4 s u demo režimu), dvostruko odobravanje (409), preuzimanje, brojač i trošak, odbijanje, pauza, brisanje, nevažeći ID, plus novo:
+1. **`scripts/e2e.mjs`: 57/57 provera.** Pristanak, validacija upload-a, auth tableta, red i kod, isključena kućica za mreže, verzija fotografije, odobravanje preko reda (odgovor < 2 s, generisanje ~4 s u demo režimu), dvostruko odobravanje (409), preuzimanje, brojač i trošak, odbijanje, pauza, brisanje, nevažeći ID, plus novo:
    - **zamena fotografije:** odobravanje i odbijanje stare verzije → 409, tablet ne može da učita staru verziju, sesija ostaje na čekanju;
+   - **format slike:** 1080×1920 → 9:16, 1600×1200 → 4:3, neispravna dimenzija se ignoriše; u browser testu fotografija 1200×1600 sa telefona → 3:4;
    - **brisanje tokom generisanja:** posle završetka AI-ja sesija ostaje obrisana, rezultat ne postoji (provereno i direktno u R2, uz kontrolni objekat koji postoji).
 2. **„Obriši sve” tokom generisanja:** baza prazna, rezultat ne postoji u R2; log beleži „result discarded”.
 3. **`scripts/e2e-failures.mjs`, MODE=fail: 8/8.** Greška → automatski ponovni pokušaj → `failed`, „Ponovi” sa tableta, dnevni limit (posle limita ništa se ne poziva, brojač ne raste).
@@ -415,7 +421,8 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | R10 | Admin token ne ističe i nije vezan za uređaj. | Promena PIN-a ga poništava. |
 | R11 | Ograničenje pokušaja prijave je globalno: napadač može privremeno blokirati prijavu osoblja. | Malo verovatno za jedno veče. |
 | R12 | Nova fotografija dok gost čeka pomera ga na kraj reda. | Namerno jednostavno. |
-| R22 | Bez objave na mrežama (3.7): agencija nema slike za svoje kanale. | Svesna odluka; uključuje se uz dodatni posao ako agencija zatraži. |
+| R22 | Bez objave na mrežama (3.7): agencija nema slike za svoje kanale. | Odluka agencije. |
+| R23 | Najbliži podržani format nije uvek tačan format fotografije (npr. 1080×1350 je tačno 4:5, ali neobičan format se zaokružuje). | Razlika je mala; slika se ne seče, model kadrira u izabranom formatu. |
 | R13 | Nema serverske provere da je na slici jedna punoletna osoba; oslanja se na osoblje. | Svesna odluka. |
 | R14 | „Obriši sve podatke” je nepovratno. | Potvrda upisom reči. |
 | R15 | Rukovanje brendom/zaštićenim znakom igre i pravo na korišćenje teme. | Aplikacija ne koristi ime ni logo; licenca eventa nepoznata. |
@@ -432,8 +439,9 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 4. Da li je mera 18+ (kućica + vizuelna provera + tabla) dovoljna za Gemini uslove?
 5. Da li dodati „Probaj još jednom” za gosta?
 6. Domen (`gta.<domen>`) i Cloudflare nalog (Workers Paid): ko otvara i ko ima pristup?
-7. Da li agencija želi objavu slika na mrežama (tada je potreban tok iz 3.7) ili ostaje isključeno?
-8. Format slike: 3:4 (portret, trenutno) ili 9:16 (Instagram/TikTok story)?
+7. ~~Objava na mrežama?~~ **Odlučeno:** ne, samo preuzimanje.
+8. ~~Format slike?~~ **Odlučeno:** isti kao ulazna fotografija.
+9. ~~Cloudflare Workers Paid?~~ **Odlučeno:** da.
 
 ---
 
@@ -455,7 +463,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | Pet 13. 11. | Odluke (provajder, arhitektura) |
 | Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi |
 | Ned 15. 11. | **Prvo:** Google projekat sa billingom, logovanje isključeno, ključ → **test prompta** (10–20 slika, trajanje, odbijanja) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
-| Pon 16. 11. | Test na pravim telefonima: iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen; odluke agencije (16.7, 16.8) |
+| Pon 16. 11. | Test na pravim telefonima (uputstvo: `TESTIRANJE.md`): iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen |
 | Uto 17. 11. | Proba u tržnom centru (signal, ring svetlo, QR); zaključavanje koda uveče |
 | Sre 18. 11. | Event |
 

@@ -83,9 +83,10 @@ Povratak u demo: `PROVIDER = "mock"` i ponovo deploy.
 
 ## Lokalni rad i testovi
 
+Detaljno uputstvo, uključujući test na pravom telefonu: **`TESTIRANJE.md`**.
+
 ```bash
-cp .dev.vars.example .dev.vars
-npm run db:local
+npm run setup:local                          # .dev.vars (PIN 123456) + lokalna baza
 npm run dev                                  # http://127.0.0.1:8787
 BASE=http://127.0.0.1:8787 PIN=123456 npm run test:e2e
 ```

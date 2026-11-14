@@ -46,6 +46,8 @@ crons = ["*/5 * * * *"]
 PROVIDER = "mock"
 GEMINI_MODEL = "gemini-nano-banana-2.1"
 IMAGE_SIZE = "2K"
+# Format izlazne slike se uzima iz ulazne fotografije (najbliži podržani);
+# ASPECT_RATIO se koristi samo ako format nije poznat.
 ASPECT_RATIO = "3:4"
 
 # Limit generacija po danu (vreme po Beogradu). 300 ljudi + 20% rezerve.

@@ -13,6 +13,7 @@
   let pollTimer = null;
   let lastStatus = null;
   let photoBlob = null;
+  let photoSize = '';
   let resultUrl = null;
   let resultBlob = null;
 
@@ -147,6 +148,7 @@
     canvas.width = Math.round(w * scale);
     canvas.height = Math.round(h * scale);
     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    photoSize = canvas.width + 'x' + canvas.height;
     if (img.close) img.close();
     // Ponovno kodiranje uklanja EXIF podatke (lokacija, uređaj).
     return new Promise((resolve, reject) =>
@@ -176,7 +178,7 @@
     try {
       const st = await api('/api/s/' + sessionId + '/photo', {
         method: 'POST',
-        headers: { 'content-type': 'image/jpeg' },
+        headers: { 'content-type': 'image/jpeg', 'x-photo-size': photoSize },
         body: photoBlob,
       });
       render(st);

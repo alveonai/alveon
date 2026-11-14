@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "setup:local": "node -e \"require('fs').existsSync('.dev.vars')||require('fs').copyFileSync('.dev.vars.example','.dev.vars')\" && wrangler d1 execute gta-booth-db --local --file=schema.sql",
     "dev": "wrangler dev",
+    "dev:lan": "wrangler dev --ip 0.0.0.0",
     "db:local": "wrangler d1 execute gta-booth-db --local --file=schema.sql",
     "db:remote": "wrangler d1 execute gta-booth-db --remote --file=schema.sql",
     "deploy": "wrangler deploy",

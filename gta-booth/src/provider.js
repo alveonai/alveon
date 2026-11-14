@@ -16,9 +16,9 @@ export class ProviderError extends Error {
 
 const GEMINI_TIMEOUT_MS = 120_000;
 
-export async function generateStylized(env, photoBytes, photoMime) {
+export async function generateStylized(env, photoBytes, photoMime, opts = {}) {
   const provider = (env.PROVIDER || 'mock').toLowerCase();
-  if (provider === 'gemini') return generateWithGemini(env, photoBytes, photoMime);
+  if (provider === 'gemini') return generateWithGemini(env, photoBytes, photoMime, opts);
   return generateMock(env, photoBytes, photoMime);
 }
 
@@ -32,7 +32,7 @@ async function generateMock(env, photoBytes, photoMime) {
   return { bytes: photoBytes, mime: photoMime || 'image/jpeg' };
 }
 
-async function generateWithGemini(env, photoBytes, photoMime) {
+async function generateWithGemini(env, photoBytes, photoMime, opts = {}) {
   if (!env.GEMINI_API_KEY) {
     throw new ProviderError('GEMINI_API_KEY nije podešen', { retryable: false });
   }
@@ -56,7 +56,8 @@ async function generateWithGemini(env, photoBytes, photoMime) {
       config: {
         responseModalities: ['IMAGE'],
         imageConfig: {
-          aspectRatio: env.ASPECT_RATIO || '3:4',
+          // Isti format kao ulazna fotografija (najbliži podržani), vidi index.js.
+          aspectRatio: opts.aspectRatio || env.ASPECT_RATIO || '3:4',
           imageSize: env.IMAGE_SIZE || '2K',
         },
         // Ne čuvati zahtev u logovima projekta (pored isključenog logovanja u AI Studiju).

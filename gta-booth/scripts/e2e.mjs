@@ -199,6 +199,20 @@ r = await call(`/api/s/${s4.id}/result`);
 check('rezultat nije upisan posle brisanja', r.status === 404);
 console.log('    R2_CHECK_DELETED=' + s4.id);
 
+// --- format izlazne slike = format ulazne ---
+console.log('Format slike');
+const s5 = await newSession();
+await call(`/api/s/${s5.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 11), headers: { 'content-type': 'image/jpeg', 'x-photo-size': '1080x1920' } });
+let q5 = await call('/api/admin/queue', { token });
+check('uspravna 1080x1920 → 9:16', q5.data.pending.find((p) => p.id === s5.id)?.photo_aspect === '9:16');
+await call(`/api/s/${s5.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 12), headers: { 'content-type': 'image/jpeg', 'x-photo-size': '1600x1200' } });
+q5 = await call('/api/admin/queue', { token });
+check('položena 1600x1200 → 4:3', q5.data.pending.find((p) => p.id === s5.id)?.photo_aspect === '4:3');
+await call(`/api/s/${s5.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 13), headers: { 'content-type': 'image/jpeg', 'x-photo-size': 'abc' } });
+q5 = await call('/api/admin/queue', { token });
+check('neispravna dimenzija se ignoriše (podrazumevani format)', q5.data.pending.find((p) => p.id === s5.id)?.photo_aspect === null);
+await decide('reject', s5.id, token);
+
 // --- pauza ---
 console.log('Pauza');
 r = await call('/api/admin/pause', { method: 'POST', token, body: { paused: true } });

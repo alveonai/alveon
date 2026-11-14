@@ -38,6 +38,28 @@ const isValidId = (id) => typeof id === 'string' && /^[A-Za-z0-9_-]{20,40}$/.tes
 const socialEnabled = (env) => env.SOCIAL_CONSENT_ENABLED === '1';
 const isDemo = (env) => (env.PROVIDER || 'mock') !== 'gemini';
 
+// Formati koje Gemini podržava za izlaznu sliku (bez ekstremnih panorama).
+const SUPPORTED_ASPECTS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
+
+// Najbliži podržani format za datu širinu i visinu (poređenje u log razmeri).
+function nearestAspect(w, h) {
+  if (!(w > 0 && h > 0)) return null;
+  const target = Math.log(w / h);
+  let best = null;
+  let bestDiff = Infinity;
+  for (const a of SUPPORTED_ASPECTS) {
+    const [aw, ah] = a.split(':').map(Number);
+    const diff = Math.abs(Math.log(aw / ah) - target);
+    if (diff < bestDiff) { bestDiff = diff; best = a; }
+  }
+  return best;
+}
+
+function parsePhotoSize(header) {
+  const m = /^(\d{2,5})x(\d{2,5})$/.exec(String(header || ''));
+  return m ? nearestAspect(Number(m[1]), Number(m[2])) : null;
+}
+
 function transientDelays(env) {
   return String(env.TRANSIENT_DELAYS_S || '5,15,30,60').split(',').map((x) => num(x.trim(), 10));
 }
@@ -156,7 +178,7 @@ async function processJob(env, id, deliveryAttempt) {
     `UPDATE sessions SET status = 'generating', started_at = ?, attempts = attempts + 1, updated_at = ?, error = NULL
      WHERE id = ? AND attempts < max_attempts AND photo_key IS NOT NULL
        AND (status = 'approved' OR (status = 'generating' AND started_at < ?))
-     RETURNING attempts, started_at, photo_key`,
+     RETURNING attempts, started_at, photo_key, photo_aspect`,
   ).bind(t, t, id, t - GENERATION_STALE_MS).first();
   if (!claim) {
     const fresh = await getSession(env, id);
@@ -186,7 +208,9 @@ async function processJob(env, id, deliveryAttempt) {
     const obj = await env.PHOTOS.get(claim.photo_key);
     if (!obj) throw new ProviderError('Originalna slika ne postoji', { retryable: false });
     const photo = new Uint8Array(await obj.arrayBuffer());
-    const result = await generateStylized(env, photo, obj.httpMetadata?.contentType || 'image/jpeg');
+    const result = await generateStylized(env, photo, obj.httpMetadata?.contentType || 'image/jpeg', {
+      aspectRatio: claim.photo_aspect || env.ASPECT_RATIO || '3:4',
+    });
 
     const resultKey = `results/${id}/${claim.attempts}`;
     await env.PHOTOS.put(resultKey, result.bytes, { httpMetadata: { contentType: result.mime } });
@@ -295,11 +319,13 @@ async function handleGuest(request, env, path) {
     const t = now();
     // Svaka fotografija ima svoj ključ (verziju), da tablet odobri baš onu koju je video.
     const key = `photos/${id}/${t}-${randomId(6)}`;
+    // Telefon šalje dimenzije fotografije; izlazna slika dobija isti (najbliži podržani) format.
+    const aspect = parsePhotoSize(request.headers.get('x-photo-size'));
     await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: 'image/jpeg' } });
     const upd = await env.DB.prepare(
-      `UPDATE sessions SET status = 'pending', photo_key = ?, submitted_at = ?, error = NULL, updated_at = ?
+      `UPDATE sessions SET status = 'pending', photo_key = ?, photo_aspect = ?, submitted_at = ?, error = NULL, updated_at = ?
        WHERE id = ? AND status IN ('created','pending','rejected','expired')`,
-    ).bind(key, t, t, id).run();
+    ).bind(key, aspect, t, t, id).run();
     if (!upd.meta.changes) {
       await deleteObjects(env, key);
       return err(409, 'Slika je već odobrena i ne može se menjati.');
@@ -355,7 +381,7 @@ async function handleAdmin(request, env, path) {
     await expirePending(env); // lenjo istekni stare zahteve
 
     const pending = await env.DB.prepare(
-      "SELECT id, code, submitted_at, consent_social, photo_key FROM sessions WHERE status = 'pending' ORDER BY submitted_at ASC LIMIT 60",
+      "SELECT id, code, submitted_at, consent_social, photo_key, photo_aspect FROM sessions WHERE status = 'pending' ORDER BY submitted_at ASC LIMIT 60",
     ).all();
     const recent = await env.DB.prepare(
       `SELECT id, code, status, attempts, max_attempts, error, updated_at, consent_social
@@ -567,4 +593,4 @@ export default {
   },
 };
 
-export { cleanup, belgradeDay, processJob };
+export { cleanup, belgradeDay, processJob, nearestAspect };
