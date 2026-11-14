@@ -22,6 +22,20 @@ database_id = "00000000-0000-0000-0000-000000000000"
 binding = "PHOTOS"
 bucket_name = "gta-booth-photos"
 
+# Red za generisanje: approve samo upiše posao, a generisanje radi consumer
+# nezavisno od veze tableta/telefona. max_concurrency ograničava paralelne
+# pozive ka Google-u (zaštita od 429).
+[[queues.producers]]
+binding = "JOBS"
+queue = "gta-booth-jobs"
+
+[[queues.consumers]]
+queue = "gta-booth-jobs"
+max_batch_size = 1
+max_batch_timeout = 1
+max_retries = 10
+max_concurrency = 3
+
 # Čišćenje na svakih 5 minuta: istekli zahtevi, originali, stare slike.
 [triggers]
 crons = ["*/5 * * * *"]
@@ -40,6 +54,13 @@ DAILY_LIMIT = "360"
 COST_PER_IMAGE_USD = "0.0504"
 # Koliko pokušaja generisanja po gostu (1 + 1 automatski ponovni).
 MAX_ATTEMPTS = "2"
+
+# Pauze (s) pri preopterećenju Google-a (429/503); ne troše pokušaj.
+TRANSIENT_DELAYS_S = "5,15,30,60"
+
+# Kućica "pristanak za objavu na mrežama". "0" = isključeno (nema toka za
+# preuzimanje i dugoročno čuvanje dokaza o pristanku). Vidi PLAN.md, 3.7.
+SOCIAL_CONSENT_ENABLED = "0"
 
 # Najviše zahteva koji istovremeno čekaju odobrenje.
 MAX_PENDING = "40"

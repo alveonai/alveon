@@ -37,6 +37,28 @@ async function upload(id, bytes, type = 'image/jpeg') {
   return call(`/api/s/${id}/photo`, { method: 'POST', body: bytes, headers: { 'content-type': type } });
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function waitStatus(id, wanted, timeoutMs = 20000) {
+  const end = Date.now() + timeoutMs;
+  let last;
+  while (Date.now() < end) {
+    last = await call(`/api/s/${id}`);
+    if (last.status !== 200 || wanted.includes(last.data.status)) return last;
+    await sleep(300);
+  }
+  return last;
+}
+
+async function keyOf(id, token) {
+  const q = await call('/api/admin/queue', { token });
+  return q.data.pending.find((p) => p.id === id)?.photo_key;
+}
+
+async function decide(action, id, token, key) {
+  return call(`/api/admin/s/${id}/${action}`, { method: 'POST', token, body: { photo_key: key ?? (await keyOf(id, token)) } });
+}
+
 async function newSession(extra = {}) {
   const r = await call('/api/sessions', { method: 'POST', body: { age: true, consent: true, ...extra } });
   return r.data;
@@ -67,7 +89,7 @@ check('pozicija u redu 1', r.data.queuePosition === 1);
 check('demo režim prijavljen', r.data.demo === true);
 
 r = await call(`/api/s/${s1.id}/generate`, { method: 'POST' });
-check('gost ne može da generiše pre odobrenja', r.data.status === 'pending');
+check('nema rute za generisanje sa telefona (404/405)', r.status === 404 || r.status === 405);
 r = await call(`/api/s/${s1.id}/result`);
 check('rezultat nije dostupan pre generisanja (404)', r.status === 404);
 
@@ -87,20 +109,25 @@ r = await call('/api/admin/queue', { token });
 const inQueue = r.data.pending.find((p) => p.id === s1.id);
 check('zahtev vidljiv na tabletu', Boolean(inQueue));
 check('kod se poklapa', inQueue && inQueue.code === s1.code);
-check('vidljiv pristanak za mreže', inQueue && inQueue.consent_social === 1);
+check('kućica za mreže isključena: pristanak se ne beleži', inQueue && inQueue.consent_social === 0);
+check('tablet dobija verziju fotografije (photo_key)', inQueue && /^photos\//.test(inQueue.photo_key || ''));
 const usedBefore = r.data.stats.used;
 
-const ph = await call(`/api/admin/s/${s1.id}/photo`, { token, raw: true });
+const ph = await call(`/api/admin/s/${s1.id}/photo?key=${encodeURIComponent(inQueue.photo_key)}`, { token, raw: true });
 check('tablet vidi fotografiju', ph.status === 200 && (await ph.arrayBuffer()).byteLength === photo1.length);
 
 // --- odobravanje i generisanje ---
 console.log('Odobravanje i generisanje');
+r = await call(`/api/admin/s/${s1.id}/approve`, { method: 'POST', token, body: {} });
+check('odobravanje bez photo_key odbijeno (400)', r.status === 400);
 const t0 = Date.now();
-r = await call(`/api/admin/s/${s1.id}/approve`, { method: 'POST', token });
-check('odobreno i generisano', r.status === 200 && r.data.status === 'done', JSON.stringify(r));
-console.log(`    (trajalo ${((Date.now() - t0) / 1000).toFixed(1)} s)`);
-r = await call(`/api/admin/s/${s1.id}/approve`, { method: 'POST', token });
+r = await decide('approve', s1.id, token, inQueue.photo_key);
+check('odobravanje odmah vraća odgovor (red)', r.status === 200 && r.data.status === 'approved' && Date.now() - t0 < 2000, JSON.stringify(r));
+r = await decide('approve', s1.id, token, inQueue.photo_key);
 check('dvostruko odobravanje odbijeno (409)', r.status === 409);
+r = await waitStatus(s1.id, ['done', 'failed']);
+check('generisano preko reda', r.data.status === 'done', JSON.stringify(r.data));
+console.log(`    (trajalo ${((Date.now() - t0) / 1000).toFixed(1)} s)`);
 
 r = await call(`/api/s/${s1.id}`);
 check('gost vidi status done', r.data.status === 'done' && r.data.hasResult === true);
@@ -117,22 +144,21 @@ check('gotov zahtev nije više na čekanju', !r.data.pending.some((x) => x.id ==
 
 r = await upload(s1.id, fakeJpeg());
 check('nema ponovnog upload-a posle generisanja (409)', r.status === 409);
-r = await call(`/api/s/${s1.id}/generate`, { method: 'POST' });
-check('nema ponovnog generisanja posle gotovog', r.data.status === 'done');
 
 // --- odbijanje ---
 console.log('Odbijanje');
 const s2 = await newSession();
 await upload(s2.id, fakeJpeg(3000, 3));
-r = await call(`/api/admin/s/${s2.id}/reject`, { method: 'POST', token });
+r = await decide('reject', s2.id, token);
 check('odbijeno', r.status === 200);
 r = await call(`/api/s/${s2.id}`);
 check('gost vidi rejected', r.data.status === 'rejected');
 const ph2 = await call(`/api/admin/s/${s2.id}/photo`, { token, raw: true });
-check('odbijena fotografija obrisana', ph2.status === 404);
+check('odbijena fotografija obrisana', ph2.status === 409 || ph2.status === 404);
 r = await upload(s2.id, fakeJpeg(3000, 4));
 check('posle odbijanja može nova fotografija', r.data.status === 'pending');
-r = await call(`/api/admin/s/${s2.id}/approve`, { method: 'POST', token });
+await decide('approve', s2.id, token);
+r = await waitStatus(s2.id, ['done', 'failed']);
 check('druga fotografija odobrena i generisana', r.data.status === 'done');
 
 // --- red ---
@@ -144,6 +170,34 @@ r = await upload(s4.id, fakeJpeg(3000, 6));
 check('drugi u redu vidi poziciju 2', r.data.queuePosition === 2, JSON.stringify(r.data));
 r = await upload(s3.id, fakeJpeg(3100, 8));
 check('promena fotografije dok čeka je dozvoljena', r.data.status === 'pending');
+
+// --- trka: zamena fotografije u trenutku odobravanja (recenzija, stavka 1) ---
+console.log('Zamena fotografije dok osoblje gleda');
+const keyA = await keyOf(s3.id, token);
+await upload(s3.id, fakeJpeg(3300, 9)); // gost šalje B posle nego što je tablet video A
+const keyB = await keyOf(s3.id, token);
+check('nova fotografija ima novu verziju', keyA && keyB && keyA !== keyB);
+r = await decide('approve', s3.id, token, keyA);
+check('odobravanje stare verzije odbijeno (409)', r.status === 409 && /promenjena/.test(r.data.error), JSON.stringify(r));
+r = await decide('reject', s3.id, token, keyA);
+check('odbijanje stare verzije odbijeno (409)', r.status === 409);
+r = await call(`/api/admin/s/${s3.id}/photo?key=${encodeURIComponent(keyA)}`, { token });
+check('tablet ne može da učita staru verziju (409)', r.status === 409);
+r = await call(`/api/s/${s3.id}`);
+check('sesija i dalje čeka', r.data.status === 'pending');
+
+// --- trka: brisanje tokom generisanja (recenzija, stavka 2) ---
+console.log('Brisanje tokom generisanja');
+await decide('approve', s4.id, token);
+await waitStatus(s4.id, ['generating', 'done']);
+r = await call(`/api/s/${s4.id}`, { method: 'DELETE' });
+check('gost briše dok traje generisanje', r.data.status === 'deleted');
+await sleep(6000); // demo generisanje traje 4 s
+r = await call(`/api/s/${s4.id}`);
+check('posle završetka AI-ja sesija ostaje obrisana', r.status === 404, JSON.stringify(r));
+r = await call(`/api/s/${s4.id}/result`);
+check('rezultat nije upisan posle brisanja', r.status === 404);
+console.log('    R2_CHECK_DELETED=' + s4.id);
 
 // --- pauza ---
 console.log('Pauza');
@@ -171,8 +225,7 @@ r = await call('/api/s/../../etc');
 check('nevažeći ID ne prolazi', r.status === 404);
 
 // --- čišćenje reda za ponovljeno pokretanje ---
-await call(`/api/admin/s/${s3.id}/reject`, { method: 'POST', token });
-await call(`/api/admin/s/${s4.id}/reject`, { method: 'POST', token });
+await decide('reject', s3.id, token);
 
 console.log(`\nRezultat: ${passed} prošlo, ${failed} palo`);
 process.exit(failed ? 1 : 0);

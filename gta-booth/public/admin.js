@@ -9,6 +9,7 @@
   let soundOn = true;
   let knownPending = new Set();
   let firstLoad = true;
+  let socialOn = false;
   const photoUrls = new Map(); // id -> object URL
   const resultUrls = new Map();
   const busy = new Set(); // id-jevi na kojima je akcija u toku
@@ -85,14 +86,17 @@
 
   // ---------- prikaz ----------
 
-  async function loadImage(id, kind, img) {
+  // Fotografija se kešira po ključu (verziji): ako gost pošalje novu, tablet je ponovo učitava.
+  async function loadImage(id, kind, img, photoKey) {
     const cache = kind === 'photo' ? photoUrls : resultUrls;
-    if (cache.has(id)) { img.src = cache.get(id); return; }
+    const cacheKey = kind === 'photo' ? photoKey : id;
+    if (cache.has(cacheKey)) { img.src = cache.get(cacheKey); return; }
     try {
-      const res = await api('/api/admin/s/' + id + '/' + kind);
+      const q = kind === 'photo' ? '?key=' + encodeURIComponent(photoKey) : '';
+      const res = await api('/api/admin/s/' + id + '/' + kind + q);
       const url = URL.createObjectURL(await res.blob());
-      cache.set(id, url);
-      img.src = url;
+      cache.set(cacheKey, url);
+      if (kind !== 'photo' || img.closest('[data-key]')?.dataset.key === photoKey) img.src = url;
     } catch (_) {}
   }
 
@@ -125,12 +129,23 @@
         el.querySelector('.code').textContent = p.code;
         el.querySelector('.ok').addEventListener('click', () => approve(p.id, el));
         el.querySelector('.no').addEventListener('click', () => reject(p.id, el));
-        loadImage(p.id, 'photo', el.querySelector('img'));
         grid.appendChild(el);
         setTimeout(() => el.classList.remove('new'), 6000);
       }
+      if (el.dataset.key !== p.photo_key) {
+        // Nova ili promenjena fotografija: osoblje mora da vidi baš ovu verziju.
+        const changed = Boolean(el.dataset.key);
+        el.dataset.key = p.photo_key;
+        const img = el.querySelector('img');
+        img.removeAttribute('src');
+        loadImage(p.id, 'photo', img, p.photo_key);
+        if (changed) {
+          el.classList.add('new');
+          setTimeout(() => el.classList.remove('new'), 6000);
+        }
+      }
       el.querySelector('.meta').textContent =
-        'čeka ' + ago(p.submitted_at, serverTime) + (p.consent_social ? ' · OK za mreže' : '');
+        'čeka ' + ago(p.submitted_at, serverTime) + (socialOn && p.consent_social ? ' · OK za mreže' : '');
     }
     $('pendingEmpty').classList.toggle('hidden', list.length > 0);
   }
@@ -171,6 +186,13 @@
       tdTime.textContent = 'pre ' + ago(r.updated_at, serverTime);
       const tdAct = document.createElement('td');
       tdAct.className = 'row-actions';
+      if (r.status === 'done') {
+        const b = document.createElement('button');
+        b.className = 'btn secondary';
+        b.textContent = '▦ QR za preuzimanje';
+        b.addEventListener('click', () => showDownloadQr(r.id, r.code));
+        tdAct.appendChild(b);
+      }
       if (r.status === 'failed' || r.status === 'limit') {
         const b = document.createElement('button');
         b.className = 'btn';
@@ -205,6 +227,7 @@
       const newOnes = pending.filter((p) => !knownPending.has(p.id));
       if (!firstLoad && newOnes.length) beep();
       knownPending = new Set(data.pending.map((p) => p.id));
+      socialOn = Boolean(data.stats.socialEnabled);
       renderPending(pending, data.serverTime);
       renderRecent(data.recent, data.serverTime);
       renderStats(data.stats, pending.length);
@@ -216,42 +239,58 @@
 
   // ---------- akcije ----------
 
-  function approve(id, el) {
+  // Šalje ključ fotografije koju je osoblje videlo; server odbija (409) ako ju je gost u međuvremenu promenio.
+  async function decide(action, id, el) {
     if (busy.has(id)) return;
-    busy.add(id);
-    el.remove();
-    // Zahtev traje dok se slika ne generiše; ne čekamo ga, tablet ostaje slobodan.
-    api('/api/admin/s/' + id + '/approve', { method: 'POST' })
-      .catch((e) => alert('Odobravanje nije uspelo: ' + e.message))
-      .finally(() => { busy.delete(id); refresh(); });
-    setTimeout(refresh, 300);
-  }
-
-  async function reject(id, el) {
-    if (busy.has(id)) return;
+    const photoKey = el.dataset.key;
+    if (!photoKey || !el.querySelector('img').getAttribute('src')) {
+      alert('Fotografija se još učitava.');
+      return;
+    }
     busy.add(id);
     el.remove();
     try {
-      await api('/api/admin/s/' + id + '/reject', { method: 'POST' });
+      await api('/api/admin/s/' + id + '/' + action, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ photo_key: photoKey }),
+      });
     } catch (e) {
-      alert('Odbijanje nije uspelo: ' + e.message);
+      alert((action === 'approve' ? 'Odobravanje' : 'Odbijanje') + ' nije uspelo: ' + e.message);
     } finally {
       busy.delete(id);
-      const u = photoUrls.get(id);
-      if (u) { URL.revokeObjectURL(u); photoUrls.delete(id); }
+      const u = photoUrls.get(photoKey);
+      if (u) { URL.revokeObjectURL(u); photoUrls.delete(photoKey); }
       refresh();
     }
   }
 
-  function retry(id, btn) {
+  const approve = (id, el) => decide('approve', id, el);
+  const reject = (id, el) => decide('reject', id, el);
+
+  async function retry(id, btn) {
     if (busy.has(id)) return;
     busy.add(id);
     btn.disabled = true;
     btn.textContent = '…';
-    api('/api/admin/s/' + id + '/retry', { method: 'POST' })
-      .catch((e) => alert('Ponovni pokušaj nije uspeo: ' + e.message))
-      .finally(() => { busy.delete(id); refresh(); });
-    setTimeout(refresh, 300);
+    try {
+      await api('/api/admin/s/' + id + '/retry', { method: 'POST' });
+    } catch (e) {
+      alert('Ponovni pokušaj nije uspeo: ' + e.message);
+    } finally {
+      busy.delete(id);
+      refresh();
+    }
+  }
+
+  // QR za preuzimanje: gost koji je izgubio stranicu ponovo skenira i dolazi na svoj rezultat.
+  function showDownloadQr(id, code) {
+    const q = qrcode(0, 'M');
+    q.addData(location.origin + '/#s=' + id);
+    q.make();
+    $('qrBox').innerHTML = q.createSvgTag({ cellSize: 8, margin: 2, scalable: true });
+    $('qrCode').textContent = code;
+    $('qrModal').classList.remove('hidden');
   }
 
   async function togglePause() {
@@ -295,6 +334,7 @@
   $('pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
   $('b-pause').addEventListener('click', togglePause);
   $('b-purge').addEventListener('click', purge);
+  $('qrModal').addEventListener('click', () => $('qrModal').classList.add('hidden'));
   $('b-sound').addEventListener('click', () => {
     soundOn = !soundOn;
     $('b-sound').textContent = '🔔 Zvuk: ' + (soundOn ? 'uključen' : 'isključen');

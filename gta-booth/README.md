@@ -13,13 +13,18 @@ sliku, gost je preuzima. Bez instalacije aplikacije.
 
 ```
 telefon gosta ──▶ Cloudflare Worker ──▶ D1 (statusi) + R2 (slike)
-                        ▲                      │
-tablet (✅/❌) ─────────┘   posle ✅ ──▶ Gemini API (store=false)
+                        ▲         │
+tablet (✅/❌) ─────────┘         └─ posle ✅ ─▶ Queue ─▶ consumer ─▶ Gemini API (store=false)
 ```
 
-- Generisanje pokreće **tablet** u trenutku odobrenja. Telefon gosta je rezerva
-  (preuzima posao ako tablet ne krene u roku od 20 s).
+- ✅ na tabletu samo upiše posao u **Cloudflare Queue** i odmah vrati odgovor;
+  generisanje radi consumer nezavisno od veze tableta/telefona, najviše 3 paralelno.
+- Tablet šalje verziju fotografije koju je video; ako ju je gost u međuvremenu
+  promenio, server vraća 409 i ništa ne odobrava.
+- Upisi posle AI poziva su uslovni (fencing): brisanje tokom generisanja ostaje brisanje.
 - 1 automatski ponovni pokušaj po gostu; posle toga dugme **↻ Ponovi** na tabletu.
+- Google 429/503: ponavlja se posle 5/15/30/60 s, ne troši pokušaj ni brojač.
+- Dugme **QR za preuzimanje** na tabletu za gosta koji je izgubio stranicu.
 - Dnevni limit (`DAILY_LIMIT`) se proverava na serveru, atomično.
 - Pauza na tabletu zaustavlja nove goste.
 - Brisanje: neodobreno posle 15 min, odbijeno odmah, original 60 min posle
@@ -31,7 +36,8 @@ Sav kod za AI je u `src/provider.js`, a prompt u `src/prompt.js`.
 
 ## Postavljanje (jednom)
 
-Potrebno: Node 20+, Cloudflare nalog.
+Potrebno: Node 20+, Cloudflare nalog sa **Workers Paid** planom ($5/mes; besplatni
+plan ima 10 ms CPU po zahtevu, što nije dovoljno za obradu slika).
 
 ```bash
 cd gta-booth
@@ -41,6 +47,7 @@ npx wrangler login
 # 1. baza i skladište
 npx wrangler d1 create gta-booth-db        # upisati dobijeni database_id u wrangler.toml
 npx wrangler r2 bucket create gta-booth-photos
+npx wrangler queues create gta-booth-jobs
 npm run db:remote                           # pravi tabele
 
 # 2. tajne
@@ -64,8 +71,13 @@ dobijenu `*.workers.dev` adresu).
 2. AI Studio → **Logs**: isključiti logovanje za projekat. Nikad ne deliti logove
    ni datasetove sa Googleom.
 3. `npx wrangler secret put GEMINI_API_KEY`
-4. U `wrangler.toml`: `PROVIDER = "gemini"`, pa `npm run deploy`.
-5. Na tabletu „Režim” pokazuje **UŽIVO**.
+4. U AI Studiju proveriti limite (RPM/RPD) za `gemini-nano-banana-2.1`; ako su
+   ispod ~5 paralelnih zahteva, zatražiti povećanje.
+5. U `wrangler.toml`: `PROVIDER = "gemini"`, pa `npm run deploy`.
+6. Na tabletu „Režim” pokazuje **UŽIVO**.
+
+Napomena: budžet u Google Cloud billing-u samo šalje upozorenje i **ne zaustavlja**
+trošak. Stvarni limit troška je `DAILY_LIMIT` u aplikaciji.
 
 Povratak u demo: `PROVIDER = "mock"` i ponovo deploy.
 
@@ -78,19 +90,25 @@ npm run dev                                  # http://127.0.0.1:8787
 BASE=http://127.0.0.1:8787 PIN=123456 npm run test:e2e
 ```
 
-Test grešaka i limita (drugi server):
+Test grešaka i limita (posebni serveri):
 
 ```bash
+npx wrangler d1 execute gta-booth-db --local --persist-to .wrangler/fail --file=schema.sql
 npx wrangler dev --port 8788 --persist-to .wrangler/fail \
   --var MOCK_FAIL:1 --var DAILY_LIMIT:3 --var MOCK_DELAY_MS:300
-# (pre toga: npx wrangler d1 execute gta-booth-db --local --persist-to .wrangler/fail --file=schema.sql)
-BASE=http://127.0.0.1:8788 node scripts/e2e-failures.mjs
+BASE=http://127.0.0.1:8788 MODE=fail node scripts/e2e-failures.mjs
+
+npx wrangler d1 execute gta-booth-db --local --persist-to .wrangler/t429 --file=schema.sql
+npx wrangler dev --port 8790 --persist-to .wrangler/t429 \
+  --var MOCK_FAIL:429 --var TRANSIENT_DELAYS_S:1,1,1 --var MOCK_DELAY_MS:200
+BASE=http://127.0.0.1:8790 MODE=429 node scripts/e2e-failures.mjs
 ```
 
 ## Na dan eventa (kontrolna lista)
 
 - [ ] Tablet: `/admin.html`, prijavljen, zvuk uključen, punjač
 - [ ] Sopstveni 4G ruter za tablet
+- [ ] Ring svetlo na štandu (najveći dobitak za prepoznatljivost lica)
 - [ ] Odštampan QR (`/qr.html`) i tabla „18+”
 - [ ] Režim **UŽIVO**, limit i procena troška vidljivi
 - [ ] Probna slika jednog člana tima pre otvaranja

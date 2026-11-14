@@ -15,8 +15,6 @@
   let photoBlob = null;
   let resultUrl = null;
   let resultBlob = null;
-  let generateInFlight = false;
-  let lastGenerateKick = 0;
 
   // ---------- pomoćno ----------
 
@@ -79,6 +77,7 @@
         if (v !== undefined) el.textContent = v;
       });
       $('demoBadge').classList.toggle('hidden', !cfg.demo);
+      $('socialRow').classList.toggle('hidden', !cfg.socialEnabled);
       return cfg;
     } catch (_) {
       return { paused: false };
@@ -99,7 +98,11 @@
       const data = await api('/api/sessions', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ age: $('c-age').checked, consent: $('c-consent').checked, social: $('c-social').checked }),
+        body: JSON.stringify({
+          age: $('c-age').checked,
+          consent: $('c-consent').checked,
+          social: !$('socialRow').classList.contains('hidden') && $('c-social').checked,
+        }),
       });
       setSession(data.id, data.code);
       showCapture();
@@ -225,7 +228,6 @@
       case 'generating':
         $('code-gen').textContent = sessionCode;
         show('generating');
-        if (st.status === 'approved') kickGenerate();
         break;
       case 'done':
         stopPolling();
@@ -247,19 +249,6 @@
         break;
       default:
         message('Nepoznato stanje', 'Osveži stranicu.');
-    }
-  }
-
-  // Rezerva: ako tablet ne pokrene generisanje, telefon pokušava (server dozvoljava posle 20 s).
-  async function kickGenerate() {
-    if (generateInFlight || Date.now() - lastGenerateKick < 25000) return;
-    lastGenerateKick = Date.now();
-    generateInFlight = true;
-    try {
-      const st = await api('/api/s/' + sessionId + '/generate', { method: 'POST' });
-      render(st);
-    } catch (_) { /* polling nastavlja */ } finally {
-      generateInFlight = false;
     }
   }
 
