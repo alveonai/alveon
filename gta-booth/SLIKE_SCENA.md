@@ -31,6 +31,30 @@ Ime fajla = broj scene sa dve cifre, format **JPG**:
 Pazite na ime: `05.jpg`, ne `5.jpg`, ne `05.JPG.jpg`, ne `05.png`. (Ako Windows krije
 ekstenzije: u Explorer-u **View → Show → File name extensions**.)
 
+## Trenutno stanje (17. 11. 2026)
+
+Slike su preuzete iz prezentacije za klijenta „Alveon-GTA lansiranje event.pdf” i
+isečene na 600 × 750 px. Uparene su po sadržaju (odeća, poza i scena iz prompta), ne po
+natpisu u prezentaciji:
+
+| Scena | Slika iz prezentacije (strana, natpis) |
+|---|---|
+| 01 GTA V: ulica u Los Santosu | str. 9, „GTA V” |
+| **02 GTA VI ilustracija (key art)** | **nema odgovarajuće slike: polje je prazno (broj)** |
+| 03 Motor, bežiš od policije | str. 6, „Noćna potera” |
+| 04 Naslonjen na prozor auta | str. 7, natpis „Pumpa, dan” |
+| 05 Napeti susret u zadimljenom klubu | str. 7, natpis „Garaža” |
+| 06 Sa pit bulom kod ograde | str. 2 (bez natpisa) |
+| 07 Benzinska pumpa noću | str. 6, „Pumpa, noć” |
+| 08 Noćna vožnja | str. 1 (bez natpisa) |
+| 09 Krupni plan, ruka preko lica | str. 8, „Ulica u sumrak” |
+| 10 Pljačka banke | str. 7, „Pljačka banke” |
+| 11 Kiša novca | str. 6, „Kazino” |
+| 12 Kabriolet noću | str. 6, „Kabriolet” |
+| 13 Ekipa u garaži | str. 8, „Ekipa” |
+| 14 Teretana, sediš na klupi | str. 7, „Teretana” |
+| 15 Grove Street u sumrak | str. 9, „San Andreas” |
+
 ## Preporuka za slike
 
 - Uspravne, odnos **4:5** (npr. **800 × 1000 px**). Polje je uvek uspravno; slika drugog
