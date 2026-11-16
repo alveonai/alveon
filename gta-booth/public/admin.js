@@ -121,6 +121,7 @@
         el.innerHTML =
           '<img alt="Fotografija gosta">' +
           '<div class="code center"></div>' +
+          '<div class="scene-tag"></div>' +
           '<div class="meta"></div>' +
           '<div class="actions">' +
           '<button class="btn ok">✅ Generiši</button>' +
@@ -144,10 +145,17 @@
           setTimeout(() => el.classList.remove('new'), 6000);
         }
       }
+      // Scena se menja samo zajedno sa fotografijom, pa uvek odgovara prikazanoj verziji.
+      el.querySelector('.scene-tag').textContent = sceneText(p);
       el.querySelector('.meta').textContent =
         'čeka ' + ago(p.submitted_at, serverTime) + (socialOn && p.consent_social ? ' · OK za mreže' : '');
     }
     $('pendingEmpty').classList.toggle('hidden', list.length > 0);
+  }
+
+  function sceneText(r) {
+    if (!r.scene) return 'Scena: podrazumevana';
+    return 'Scena ' + Number(r.scene) + ': ' + (r.scene_title || '?') + (r.scene_aspect ? ' (' + r.scene_aspect + ')' : '');
   }
 
   const statusLabel = {
@@ -170,6 +178,10 @@
       const tdCode = document.createElement('td');
       tdCode.className = 'c';
       tdCode.textContent = r.code;
+      const sc = document.createElement('div');
+      sc.className = 'scene-small';
+      sc.textContent = sceneText(r);
+      tdCode.appendChild(sc);
       const tdStatus = document.createElement('td');
       const chip = document.createElement('span');
       chip.className = 'chip ' + r.status;

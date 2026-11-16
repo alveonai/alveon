@@ -19,10 +19,12 @@ const GEMINI_TIMEOUT_MS = 120_000;
 export async function generateStylized(env, photoBytes, photoMime, opts = {}) {
   const provider = (env.PROVIDER || 'mock').toLowerCase();
   if (provider === 'gemini') return generateWithGemini(env, photoBytes, photoMime, opts);
-  return generateMock(env, photoBytes, photoMime);
+  return generateMock(env, photoBytes, photoMime, opts);
 }
 
-async function generateMock(env, photoBytes, photoMime) {
+async function generateMock(env, photoBytes, photoMime, opts = {}) {
+  // Za proveru u logu da scena stiže do AI sloja (prompt se ne ispisuje ceo).
+  console.log('mock generate', 'aspect=' + (opts.aspectRatio || '-'), 'prompt=' + String(opts.prompt || STYLE_PROMPT).slice(0, 60).replace(/\s+/g, ' '));
   const delay = Number(env.MOCK_DELAY_MS || 4000);
   await new Promise((r) => setTimeout(r, delay));
   // Samo za testiranje: MOCK_FAIL = "1" (obična greška) ili "429" (preopterećenje).
@@ -48,7 +50,8 @@ async function generateWithGemini(env, photoBytes, photoMime, opts = {}) {
         {
           role: 'user',
           parts: [
-            { text: STYLE_PROMPT },
+            // Prompt izabrane scene (src/scenes.js); bez scene podrazumevani (src/prompt.js).
+            { text: opts.prompt || STYLE_PROMPT },
             { inlineData: { mimeType: photoMime || 'image/jpeg', data: toBase64(photoBytes) } },
           ],
         },
@@ -56,7 +59,7 @@ async function generateWithGemini(env, photoBytes, photoMime, opts = {}) {
       config: {
         responseModalities: ['IMAGE'],
         imageConfig: {
-          // Isti format kao ulazna fotografija (najbliži podržani), vidi index.js.
+          // Format scene; bez scene isti format kao ulazna fotografija (vidi index.js).
           aspectRatio: opts.aspectRatio || env.ASPECT_RATIO || '3:4',
           imageSize: env.IMAGE_SIZE || '2K',
         },

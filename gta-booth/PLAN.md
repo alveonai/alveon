@@ -178,8 +178,9 @@ gta-booth/
 | # | Ekran | Šta se dešava |
 |---|---|---|
 | 1 | **Pristanak** | Kratak tekst (AI obrada preko Google Gemini API, nema treniranja, Google može čuvati do 55 dana radi bezbednosti, original se briše najkasnije 60 min posle generisanja, rezultat posle 7 dana, pristanak se može povući; link ka punom obaveštenju). Dve kućice: **„Imam 18 ili više godina”** (obavezno) i **„Pristajem na obradu moje fotografije AI alatom”** (obavezno). Treća, za objavu na mrežama, postoji u kodu ali je isključena (3.7). Dugme „Nastavi” je neaktivno dok obe obavezne nisu štiklirane; server ponovo proverava. |
-| 2 | **Slikanje** | Saveti (osvetljenje, od struka naviše, jedna osoba). Dugme „Otvori kameru” (`<input type=file accept=image/* capture=user>`, prednja kamera) i „Izaberi iz galerije”. Fotografija se na telefonu umanji na najviše 1600 px po dužoj strani i ponovo kodira u JPEG (kvalitet 0.85), čime se uklanjaju EXIF podaci (lokacija, uređaj). Prikaz pregleda, „Pošalji na odobrenje” / „Slikaj ponovo”. |
-| 3 | **Čeka odobrenje** | Veliki kod od 3 znaka (npr. `ETD`) koji gost pokazuje osoblju, pozicija u redu, dugme „Promeni fotografiju”. |
+| 1a | **Izbor scene** (od 17. 11.) | 15 scena u tri grupe (dokument agencije, vidi 9.1): polje sa slikom (`/scene/<id>.jpg`; dok slika ne postoji, obojeno polje sa brojem), naziv, oznaka „uspravna/položena”, a za scene sa više likova „ti + izmišljeni partner/ekipa”. Dodir na scenu vodi na slikanje. Izbor se pamti u `localStorage` do slanja. |
+| 2 | **Slikanje** | Na vrhu izabrana scena i dugme „Promeni”. Saveti iz dokumenta (pravo u kameru, dobro svetlo, bez naočara i kape, lice zauzima dobar deo kadra, jedna osoba). Dugme „Otvori kameru” (`<input type=file accept=image/* capture=user>`, prednja kamera) i „Izaberi iz galerije”. Fotografija se na telefonu umanji na najviše 1600 px po dužoj strani i ponovo kodira u JPEG (kvalitet 0.85), čime se uklanjaju EXIF podaci (lokacija, uređaj). Prikaz pregleda, „Pošalji na odobrenje” / „Slikaj ponovo”. |
+| 3 | **Čeka odobrenje** | Veliki kod od 3 znaka (npr. `ETD`) koji gost pokazuje osoblju, naziv scene, pozicija u redu, dugme „Promeni fotografiju”. |
 | 4 | **Generisanje** | Animacija i poruke koje se smenjuju (do ~1 min). |
 | 5 | **Gotovo** | Slika, dugme „Sačuvaj sliku” (Web Share API sa fajlom, slika je već preuzeta pre klika; inače preuzimanje) i ravnopravno uputstvo „Ili: pritisni i drži sliku”. Napomena da osoblje može ponovo pokazati QR za preuzimanje. |
 | — | Odbijeno | „Fotografija nije odobrena” i dugme „Slikaj ponovo” (ista sesija, nova fotografija). |
@@ -215,7 +216,8 @@ sessions(
   consent_social INTEGER /* uvek 0 dok je 3.7 isključeno */, age_confirmed INTEGER,
   submitted_at INTEGER,  -- kada je fotografija poslata na odobrenje
   photo_key TEXT,        -- R2 ključ sa verzijom: photos/<id>/<vreme>-<nasumično>
-  photo_aspect TEXT,     -- format fotografije (npr. "3:4"); isti se traži od AI-ja
+  photo_aspect TEXT,     -- format fotografije (npr. "3:4"); koristi se samo ako scena nema svoj format
+  scene TEXT,            -- izabrana scena (src/scenes.js, "01".."15"); NULL = podrazumevani prompt (migrations/0002_scene.sql za staru bazu)
   result_key TEXT,       -- results/<id>/<broj pokušaja>
   result_mime TEXT,
   attempts INTEGER, max_attempts INTEGER (default 2),
@@ -282,7 +284,7 @@ Tablet (`Authorization: Bearer <token>`):
 ## 9. Generisanje slike
 
 - Model: `gemini-nano-banana-2.1`, `responseModalities: ['IMAGE']`, `imageConfig: { aspectRatio: <format ulazne fotografije>, imageSize: '2K' }`, **`store: false`**, timeout 120 s (AbortController).
-- **Format izlazne slike = format ulazne** (odluka agencije). Telefon posle smanjivanja šalje dimenzije (`x-photo-size: 1200x1600`); server bira najbliži podržani format (`1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9`, poređenje u log razmeri) i čuva ga u `photo_aspect`. Primeri: iPhone 3024×4032 → 3:4, 1080×1920 → 9:16, 1600×1200 → 4:3. Ako dimenzije nisu poznate: `ASPECT_RATIO` (3:4). Samo prompt nije dovoljan, jer dokumentacija ne garantuje da model zadržava format ulaza.
+- **Format izlazne slike:** od 17. 11. **format izabrane scene** (iz prompta scene, vidi 9.1). Format ulazne fotografije koristi se samo ako scena nije poslata. Ranije (do 16. 11.): **format izlazne slike = format ulazne** (odluka agencije). Telefon posle smanjivanja šalje dimenzije (`x-photo-size: 1200x1600`); server bira najbliži podržani format (`1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9`, poređenje u log razmeri) i čuva ga u `photo_aspect`. Primeri: iPhone 3024×4032 → 3:4, 1080×1920 → 9:16, 1600×1200 → 4:3. Ako dimenzije nisu poznate: `ASPECT_RATIO` (3:4). Samo prompt nije dovoljan, jer dokumentacija ne garantuje da model zadržava format ulaza.
 - Ulaz: tekst prompta + fotografija kao `inlineData` (JPEG, base64).
 - Ako odgovor nema sliku (bezbednosni filter i sl.): greška sa razlogom (`blockReason` / `finishReason`), uz automatski ponovni pokušaj.
 - Rezultat se čuva u R2 i servira gostu sa našeg domena (gost nikad ne komunicira direktno sa Googleom).
@@ -312,7 +314,36 @@ A cinematic, next-generation GTA VI-style render that looks like a scene from a 
 ```
 Promene u odnosu na v2: stil je sada polurealistični „next-gen” render umesto ilustracije sa konturama; prompt **imenuje igru** (GTA VI, Vice City); **nema** zabrane teksta/logoa/oružja/droge/alkohola/nasilja ni redova „isti broj ljudi” i „ne menjati godine i pol”. Claude je predložio da se ti redovi dodaju na kraj; agencija je odlučila da ide samo njen tekst. Rizici: R5, R6, R15. U testu prompta posebno gledati: logo/natpis igre na slici, oružje, promenu godina, odbijanja zbog imena igre.
 
-Prethodni prompt (v2, ilustracija, bez imena igre) je u git istoriji (`src/prompt.js`).
+Prethodni prompt (v2, ilustracija, bez imena igre) je u git istoriji (`src/prompt.js`). **Od 17. 11. prompt v3 se koristi samo ako zahtev nema scenu** (npr. stari zahtevi, testovi); gost uvek šalje scenu.
+
+### 9.1 Scene (od 17. 11. 2026)
+
+Izvor: Word dokument agencije „GTA promptovi za Nano Banana” (16. 11. 2026). `src/scenes.js` je napravljen automatski iz dokumenta (bez prekucavanja): 15 scena, prompt svake doslovno, sa prelomima redova.
+
+| # | Scena | Likova | Format |
+|---|---|---|---|
+| 01 | GTA V: ulica u Los Santosu | 1 | 4:5 |
+| 02 | GTA VI ilustracija (key art) | 1 | 4:5 |
+| 03 | Motor, bežiš od policije | 1 | 3:4 |
+| 04 | Naslonjen na prozor auta | 1–2 | 3:4 |
+| 05 | Napeti susret u zadimljenom klubu | 1 | 16:9 |
+| 06 | Sa pit bulom kod ograde | 1 | 16:9 |
+| 07 | Benzinska pumpa noću | 1 | 16:9 |
+| 08 | Noćna vožnja | 1–2 | 16:9 |
+| 09 | Krupni plan, ruka preko lica | 1 | 16:9 |
+| 10 | Pljačka banke | 1–2 | 16:9 |
+| 11 | Kiša novca | 1 | 16:9 |
+| 12 | Kabriolet noću | 1–2 | 16:9 |
+| 13 | Ekipa u garaži | 1–4 | 16:9 |
+| 14 | Teretana, sediš na klupi | 1 | 3:4 |
+| 15 | Grove Street u sumrak | 1 | 16:9 |
+
+- **Tok:** gost bira scenu → scena ide uz fotografiju (zaglavlje `x-scene`, server proverava da scena postoji, inače 400) → čuva se u `sessions.scene` → tablet prikazuje „Scena N: naziv (format)” na kartici i u listi → AI dobija prompt i format scene. Scena se menja **samo zajedno sa novom fotografijom** (nova verzija `photo_key`), pa osoblje uvek odobrava par fotografija + scena koji je videlo.
+- **Format:** iz prompta scene („Vertical 4:5”, „Horizontal 16:9”…), u skladu sa dokumentom („3, 4 i 14 su 3:4, ostali zadržavaju svoj format”). Ovo menja raniju odluku „izlaz = format ulaza” (9, gore).
+- **Jedna fotografija po gostu:** dokument predviđa i više fotografija za scene sa više likova (Slika 1 = Lik A…). Aplikacija šalje **jednu** fotografiju; prema pravilima samog dokumenta gost je tada Lik A, a ostali likovi su izmišljeni. Više fotografija po gostu (grupe) **nije urađeno** (rizik pred event).
+- **Mesta za popunu** „[npr. …]” u scenama 5, 6 i 12 (odeća) zamenjena su predloženom vrednošću iz dokumenta (npr. „Outfit: worn off-white t-shirt, black watch.”).
+- **Scena 15** po dokumentu traži HUD sa tekstom (sat, novac); varijante „bez HUD-a” i „PS2 izgled” iz dokumenta nisu posebne scene.
+- **Slike scena** (sličice za izbor): `public/scene/01.jpg` … `15.jpg`, dodaje agencija (uputstvo: `SLIKE_SCENA.md`). Bez slike: obojeno polje sa brojem (radi i tako). Javni API `GET /api/scenes` vraća naziv, grupu, format, broj likova i putanju slike, **bez promptova**.
 Prompt još **nije testiran** na pravom modelu (nema API ključa). **Test prompta je prvi zadatak čim postoji ključ**, jer od kvaliteta zavise ostale odluke:
 - 10–20 različitih fotografija: svetliji i tamniji ten, naočare, brada, marama ili kapa, dve osobe, slabo i mešovito svetlo kao u tržnom centru;
 - za svaku beležiti: prepoznatljivost (da/ne), odbijanje filtera (da/ne, razlog), **trajanje** (tipično i najsporije);
@@ -415,8 +446,12 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 9. **Pravi telefon preko `cloudflared` tunela, telefon na mobilnom internetu, računar kao tablet** (demo režim, HTTPS): ceo tok radi (agencija).
 10. **Pravi Gemini ključ, besplatni nivo (bez billinga):** ključ važi, model `gemini-nano-banana-2.1` postoji (lista modela). Generisanje: **429, kvota `free_tier` = 0** zahteva/min i /dan za **sve** modele za slike (Nano Banana 2.1, 2, 2 Lite, Pro, 2.5). **Zaključak: bez billinga nema nijedne slike; test prompta zahteva plaćeni nivo.** Aplikacija je grešku obradila kao prolaznu 429 (tablet: „Google preopterećen, novi pokušaj uskoro”), vidi R24.
 
+11. **Billing uključen (14. 11.), prompt v3 na pravom Gemini-ju:** radi (agencija: „sve radi”), preko telefona i tunela.
+12. **Izbor scene (17. 11.):** e2e **67/67** (57 + 10 novih: lista od 15 scena bez promptova, putanja sličice, format 16:9/3:4, nepostojeća scena 400, scena vidljiva na tabletu sa nazivom i formatom, promena scene sa novom fotografijom, generisanje, scena u listi „gotovo”). U logu servera: scena 14 → `aspect=3:4` i njen prompt, scena 05 → `aspect=16:9` i njen prompt; bez scene → prompt v3. Browser (emulacija telefona 375×812 + tablet): pristanak → izbor scene → slikanje → čekanje (kod + naziv scene) → tablet „Scena 5: … (16:9)” → ✅ → gost dobija sliku; sličica se prikazuje kad `/scene/05.jpg` postoji, bez nje obojeno polje bez ikonice greške. U konzoli samo 404 za sličice koje još ne postoje. `e2e-failures.mjs` nije ponovo pokrenut (logika grešaka nije menjana).
+
 **Nije testirano:**
-- pravo generisanje (kvalitet, prepoznatljivost, trajanje, filteri) i stvarni Gemini limiti plaćenog nivoa;
+- **scene na pravom Gemini-ju** (kvalitet, prepoznatljivost, odbijanja zbog imena igre i scena sa policijom/novcem, trajanje, poštovanje formata 16:9);
+- pravo generisanje: stvarni Gemini limiti plaćenog nivoa;
 - telefoni: jedan telefon agencije prošao (9); preostalo: drugi OS (iOS/Android), Google Lens, Instagram in-app browser;
 - produkcijski Cloudflare (CPU, Queues, cron, domen);
 - rad pod opterećenjem (npr. 20 gostiju zaredom);
@@ -443,6 +478,9 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | R11 | Ograničenje pokušaja prijave je globalno: napadač može privremeno blokirati prijavu osoblja. | Malo verovatno za jedno veče. |
 | R12 | Nova fotografija dok gost čeka pomera ga na kraj reda. | Namerno jednostavno. |
 | R22 | Bez objave na mrežama (3.7): agencija nema slike za svoje kanale. | Odluka agencije. |
+| R25 | Scene imenuju igru i izdavača (GTA V/VI, San Andreas, Rockstar, Vice City, Los Santos) i opisuju policiju, pljačku, novac. Moguća odbijanja filtera i zaštićeni elementi na slikama (npr. HUD scene 15). | Promptovi agencije, doslovno (odluka agencije). Sve scene osim 15 traže „No HUD, no text” i zabranjuju oružje, krv, alkohol. Proveriti svaku scenu bar jednom na pravom Gemini-ju pre eventa; scenu koja se odbija ili daje loš rezultat skloniti iz `src/scenes.js`. |
+| R26 | Scene sa više likova: gost šalje jednu fotografiju; ostali likovi su izmišljeni. Gost u grupi može očekivati da budu svi. | Oznaka na kartici „ti + izmišljeni partner/ekipa”; savet „samo jedna osoba na slici”. Više fotografija po gostu nije urađeno. |
+| R27 | Sličice scena još ne postoje (dodaje agencija). | Bez slike radi (obojeno polje sa brojem). Posle dodavanja slika na Cloudflare: ponovo `npm run deploy`. |
 | R23 | Najbliži podržani format nije uvek tačan format fotografije (npr. 1080×1350 je tačno 4:5, ali neobičan format se zaokružuje). | Razlika je mala; slika se ne seče, model kadrira u izabranom formatu. |
 | R13 | Nema serverske provere da je na slici jedna punoletna osoba; oslanja se na osoblje. | Svesna odluka. |
 | R14 | „Obriši sve podatke” je nepovratno. | Potvrda upisom reči. |
@@ -486,7 +524,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi; ✅ lokalno na računaru agencije (57/57, ručni test, telefon preko tunela); ✅ ključ besplatnog nivoa: kvota za slike 0 (14, tačka 10); ✅ prompt v3 (agencija) |
 | Ned 15. 11. | **Prvo:** uključiti billing na Google projektu (bez njega nema slika), logovanje isključeno → **test prompta v3** (10–20 slika, trajanje, odbijanja, logo/oružje) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
 | Pon 16. 11. | Test na pravim telefonima (uputstvo: `TESTIRANJE.md`): iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen |
-| Uto 17. 11. | Proba u tržnom centru (signal, ring svetlo, QR); zaključavanje koda uveče |
+| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67. Zatim: sličice scena (agencija), **test svake scene na pravom Gemini-ju**, postavljanje na Cloudflare, proba u tržnom centru (signal, ring svetlo, QR); zaključavanje koda uveče |
 | Sre 18. 11. | Event |
 
 **Rezervni plan:** ako aplikacija nije stabilna do ponedeljka uveče, osoblje ručno generiše slike i deli ih gostima.

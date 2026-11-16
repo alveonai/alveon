@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   age_confirmed INTEGER NOT NULL DEFAULT 0, -- potvrđeno 18+
   submitted_at  INTEGER,                    -- kada je slika poslata na odobrenje
   photo_key     TEXT,
-  photo_aspect  TEXT,                       -- format fotografije (npr. "3:4"), isti se traži od AI-ja
+  photo_aspect  TEXT,                       -- format fotografije (npr. "3:4"), ako scena nema svoj format
+  scene         TEXT,                       -- izabrana scena (src/scenes.js, npr. "05"); NULL = podrazumevani prompt
   result_key    TEXT,
   result_mime   TEXT,
   attempts      INTEGER NOT NULL DEFAULT 0,

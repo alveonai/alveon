@@ -1,4 +1,5 @@
 import { generateStylized, ProviderError } from './provider.js';
+import { getScene, publicScenes } from './scenes.js';
 
 // ---------- pomoćne funkcije ----------
 
@@ -133,6 +134,7 @@ async function publicStatus(env, s) {
     code: s.code,
     hasResult: Boolean(s.result_key) && s.status === 'done',
     demo: isDemo(env),
+    scene: s.scene || null,
   };
   if (s.status === 'pending') {
     const row = await env.DB.prepare(
@@ -178,7 +180,7 @@ async function processJob(env, id, deliveryAttempt) {
     `UPDATE sessions SET status = 'generating', started_at = ?, attempts = attempts + 1, updated_at = ?, error = NULL
      WHERE id = ? AND attempts < max_attempts AND photo_key IS NOT NULL
        AND (status = 'approved' OR (status = 'generating' AND started_at < ?))
-     RETURNING attempts, started_at, photo_key, photo_aspect`,
+     RETURNING attempts, started_at, photo_key, photo_aspect, scene`,
   ).bind(t, t, id, t - GENERATION_STALE_MS).first();
   if (!claim) {
     const fresh = await getSession(env, id);
@@ -208,8 +210,11 @@ async function processJob(env, id, deliveryAttempt) {
     const obj = await env.PHOTOS.get(claim.photo_key);
     if (!obj) throw new ProviderError('Originalna slika ne postoji', { retryable: false });
     const photo = new Uint8Array(await obj.arrayBuffer());
+    // Izabrana scena određuje prompt i format; bez scene: podrazumevani prompt i format fotografije.
+    const scene = getScene(claim.scene);
     const result = await generateStylized(env, photo, obj.httpMetadata?.contentType || 'image/jpeg', {
-      aspectRatio: claim.photo_aspect || env.ASPECT_RATIO || '3:4',
+      aspectRatio: scene?.aspect || claim.photo_aspect || env.ASPECT_RATIO || '3:4',
+      prompt: scene?.prompt,
     });
 
     const resultKey = `results/${id}/${claim.attempts}`;
@@ -274,6 +279,10 @@ async function handleGuest(request, env, path) {
     });
   }
 
+  if (path === '/api/scenes' && method === 'GET') {
+    return json({ scenes: publicScenes() }, 200, { 'cache-control': 'public, max-age=300' });
+  }
+
   if (path === '/api/sessions' && method === 'POST') {
     const body = await request.json().catch(() => ({}));
     if (body.age !== true) return err(400, 'Potrebno je potvrditi da imate 18 ili više godina.');
@@ -307,6 +316,10 @@ async function handleGuest(request, env, path) {
       return err(409, 'Slika je već odobrena i ne može se menjati.');
     }
     if (await isPaused(env)) return err(503, 'Štand je trenutno pauziran.', { paused: true });
+    // Scena se šalje uz svaku fotografiju; menja se samo zajedno sa fotografijom (nova verzija),
+    // pa tablet uvek odobrava par fotografija + scena koji je video.
+    const sceneId = request.headers.get('x-scene');
+    if (sceneId !== null && !getScene(sceneId)) return err(400, 'Izaberi scenu.');
     const pending = await env.DB.prepare("SELECT COUNT(*) AS n FROM sessions WHERE status = 'pending'").first();
     if (s.status !== 'pending' && (pending?.n || 0) >= num(env.MAX_PENDING, 40)) {
       return err(503, 'Red je trenutno pun. Pokušajte ponovo za nekoliko minuta.');
@@ -323,9 +336,9 @@ async function handleGuest(request, env, path) {
     const aspect = parsePhotoSize(request.headers.get('x-photo-size'));
     await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: 'image/jpeg' } });
     const upd = await env.DB.prepare(
-      `UPDATE sessions SET status = 'pending', photo_key = ?, photo_aspect = ?, submitted_at = ?, error = NULL, updated_at = ?
+      `UPDATE sessions SET status = 'pending', photo_key = ?, photo_aspect = ?, scene = ?, submitted_at = ?, error = NULL, updated_at = ?
        WHERE id = ? AND status IN ('created','pending','rejected','expired')`,
-    ).bind(key, aspect, t, t, id).run();
+    ).bind(key, aspect, sceneId, t, t, id).run();
     if (!upd.meta.changes) {
       await deleteObjects(env, key);
       return err(409, 'Slika je već odobrena i ne može se menjati.');
@@ -381,19 +394,23 @@ async function handleAdmin(request, env, path) {
     await expirePending(env); // lenjo istekni stare zahteve
 
     const pending = await env.DB.prepare(
-      "SELECT id, code, submitted_at, consent_social, photo_key, photo_aspect FROM sessions WHERE status = 'pending' ORDER BY submitted_at ASC LIMIT 60",
+      "SELECT id, code, submitted_at, consent_social, photo_key, photo_aspect, scene FROM sessions WHERE status = 'pending' ORDER BY submitted_at ASC LIMIT 60",
     ).all();
     const recent = await env.DB.prepare(
-      `SELECT id, code, status, attempts, max_attempts, error, updated_at, consent_social
+      `SELECT id, code, status, attempts, max_attempts, error, updated_at, consent_social, scene
        FROM sessions WHERE status IN ('approved','generating','done','failed','limit')
        ORDER BY updated_at DESC LIMIT 40`,
     ).all();
+    const withScene = (rows) => rows.map((r) => {
+      const sc = getScene(r.scene);
+      return { ...r, scene_title: sc ? sc.title : null, scene_aspect: sc ? sc.aspect : null };
+    });
     const day = belgradeDay();
     const usage = await env.DB.prepare('SELECT n FROM usage WHERE day = ?').bind(day).first();
     const used = usage?.n || 0;
     return json({
-      pending: pending.results,
-      recent: recent.results,
+      pending: withScene(pending.results),
+      recent: withScene(recent.results),
       stats: {
         day,
         used,

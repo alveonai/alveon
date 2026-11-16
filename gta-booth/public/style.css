@@ -140,3 +140,47 @@ h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
 footer { margin-top: 28px; text-align: center; font-size: 13px; color: var(--muted); }
 
 input[type="file"] { display: none; }
+
+/* ---------- izbor scene ---------- */
+.scene-group { margin: 18px 0 8px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--yellow); }
+.scene-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.scene {
+  display: block; width: 100%; padding: 0; text-align: left; font: inherit; color: var(--text);
+  background: #120a24; border: 2px solid var(--line); border-radius: 14px; overflow: hidden; cursor: pointer;
+  transition: border-color .15s ease, transform .06s ease;
+}
+.scene:active { transform: scale(.98); }
+.scene:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.scene.selected { border-color: var(--pink); box-shadow: 0 0 0 2px var(--pink); }
+.scene-thumb, .chosen-thumb { position: relative; background: var(--grad); overflow: hidden; }
+.scene-thumb { aspect-ratio: 4 / 5; }
+.scene-thumb img, .chosen-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-num {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 44px; font-weight: 900; font-style: italic; color: rgba(26, 11, 34, .55);
+}
+.has-img .ph-num { display: none; }
+/* Slika se prikazuje tek kad se učita (nema ikonice „slomljene slike” dok sličica ne postoji). */
+.scene-thumb img, .chosen-thumb img { visibility: hidden; }
+.has-img img { visibility: visible; }
+.scene-fmt {
+  position: absolute; right: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px;
+  background: rgba(11, 7, 22, .78); color: var(--text); font-size: 12px; font-weight: 700;
+}
+.scene-body { padding: 8px 10px 10px; }
+.scene-title { display: block; font-weight: 800; font-size: 15px; line-height: 1.25; }
+.scene-extra { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+.chosen {
+  display: flex; align-items: center; gap: 12px; padding: 8px; margin-bottom: 14px;
+  border: 1px solid var(--line); border-radius: 14px; background: #120a24;
+}
+.chosen-thumb { width: 52px; height: 65px; flex: 0 0 52px; border-radius: 10px; }
+.chosen-thumb .ph-num { font-size: 22px; }
+.chosen-text { flex: 1; min-width: 0; }
+.chosen-text small { display: block; color: var(--muted); font-size: 12px; }
+.chosen-text b { display: block; font-size: 16px; line-height: 1.25; }
+.link-btn {
+  font: inherit; font-weight: 800; font-size: 15px; color: var(--yellow); background: none;
+  border: 0; padding: 10px 6px; cursor: pointer; text-decoration: underline;
+}

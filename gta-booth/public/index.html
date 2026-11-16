@@ -52,12 +52,25 @@
       <p class="error hidden" id="e-consent"></p>
     </section>
 
+    <!-- Izbor scene -->
+    <section id="v-scene" class="card hidden">
+      <h2>Izaberi scenu</h2>
+      <p class="muted">Dodirni scenu u kojoj želiš da se nađeš.</p>
+      <div id="sceneList"></div>
+      <p class="error hidden" id="e-scene"></p>
+    </section>
+
     <!-- Slikanje -->
     <section id="v-capture" class="card hidden">
+      <div class="chosen" id="chosenScene">
+        <div class="chosen-thumb"><img alt=""><span class="ph-num"></span></div>
+        <div class="chosen-text"><small>Tvoja scena</small><b class="chosen-title"></b></div>
+        <button class="link-btn" id="b-scene-change" type="button">Promeni</button>
+      </div>
       <h2>Slikaj se</h2>
       <ul class="tips">
-        <li>Lice dobro osvetljeno, gledaj u kameru</li>
-        <li>Od struka naviše, bez naočara za sunce</li>
+        <li>Gledaj pravo u kameru, lice dobro osvetljeno</li>
+        <li>Bez naočara i kape, lice neka zauzme dobar deo kadra</li>
         <li>Samo jedna osoba na slici</li>
       </ul>
       <label class="btn" for="f-camera">📸 Otvori kameru</label>
@@ -77,6 +90,7 @@
       <h2>Čeka se potvrda sa štanda</h2>
       <p class="muted">Pokaži ovaj kod osoblju:</p>
       <div class="code" id="code-pending">···</div>
+      <p class="muted">Scena: <b class="scene-name"></b></p>
       <p class="muted" id="queueInfo"></p>
       <div class="spinner"></div>
       <button class="btn secondary small" id="b-change">Promeni fotografiju</button>
@@ -87,6 +101,7 @@
       <h2>Pravimo tvoj lik…</h2>
       <div class="spinner"></div>
       <p class="muted" id="genText">Ovo traje do jednog minuta.</p>
+      <p class="muted">Scena: <b class="scene-name"></b></p>
       <p class="muted">Kod: <b id="code-gen"></b></p>
     </section>
 

@@ -6,7 +6,7 @@
   const JPEG_QUALITY = 0.85;
 
   const $ = (id) => document.getElementById(id);
-  const views = ['loading', 'consent', 'capture', 'pending', 'generating', 'done', 'rejected', 'message'];
+  const views = ['loading', 'consent', 'scene', 'capture', 'pending', 'generating', 'done', 'rejected', 'message'];
 
   let sessionId = null;
   let sessionCode = '';
@@ -16,6 +16,9 @@
   let photoSize = '';
   let resultUrl = null;
   let resultBlob = null;
+  let scenes = [];
+  const sceneById = new Map();
+  let sceneId = null; // izabrana scena (npr. "05")
 
   // ---------- pomoćno ----------
 
@@ -85,6 +88,116 @@
     }
   }
 
+  // ---------- scene ----------
+
+  // Sličica scene: slika iz /scene/<id>.jpg ako postoji, inače obojeno polje sa brojem.
+  function fillThumb(box, sc) {
+    box.classList.remove('has-img');
+    let img = box.querySelector('img');
+    if (!img) { img = document.createElement('img'); img.alt = ''; box.prepend(img); }
+    let num = box.querySelector('.ph-num');
+    if (!num) { num = document.createElement('span'); num.className = 'ph-num'; box.appendChild(num); }
+    num.textContent = String(Number(sc.id));
+    img.onload = () => box.classList.add('has-img');
+    img.onerror = () => { box.classList.remove('has-img'); img.removeAttribute('src'); };
+    img.src = sc.image;
+  }
+
+  const formatLabel = (aspect) => {
+    const [w, h] = String(aspect).split(':').map(Number);
+    return w > h ? 'položena' : w < h ? 'uspravna' : 'kvadrat';
+  };
+  const extraLabel = (n) => (n >= 3 ? 'ti + izmišljena ekipa' : n === 2 ? 'ti + izmišljeni partner' : '');
+
+  async function loadScenes() {
+    try {
+      const data = await api('/api/scenes');
+      scenes = data.scenes || [];
+      sceneById.clear();
+      scenes.forEach((s) => sceneById.set(s.id, s));
+      renderSceneList();
+      $('e-scene').classList.add('hidden');
+    } catch (_) {
+      $('e-scene').textContent = 'Scene se nisu učitale. Proveri internet i osveži stranicu.';
+      $('e-scene').classList.remove('hidden');
+    }
+  }
+
+  function renderSceneList() {
+    const list = $('sceneList');
+    list.innerHTML = '';
+    let group = null;
+    let grid = null;
+    for (const sc of scenes) {
+      if (sc.group !== group) {
+        group = sc.group;
+        const h = document.createElement('h3');
+        h.className = 'scene-group';
+        h.textContent = group;
+        grid = document.createElement('div');
+        grid.className = 'scene-grid';
+        list.append(h, grid);
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'scene';
+      btn.dataset.id = sc.id;
+      const thumb = document.createElement('div');
+      thumb.className = 'scene-thumb';
+      fillThumb(thumb, sc);
+      const fmt = document.createElement('span');
+      fmt.className = 'scene-fmt';
+      fmt.textContent = formatLabel(sc.aspect);
+      thumb.appendChild(fmt);
+      const body = document.createElement('span');
+      body.className = 'scene-body';
+      const title = document.createElement('span');
+      title.className = 'scene-title';
+      title.textContent = sc.title;
+      body.appendChild(title);
+      const extra = extraLabel(sc.maxChars);
+      if (extra) {
+        const ex = document.createElement('span');
+        ex.className = 'scene-extra';
+        ex.textContent = extra;
+        body.appendChild(ex);
+      }
+      btn.append(thumb, body);
+      btn.addEventListener('click', () => selectScene(sc.id));
+      grid.appendChild(btn);
+    }
+    markSelected();
+  }
+
+  function markSelected() {
+    document.querySelectorAll('#sceneList .scene').forEach((el) => {
+      el.classList.toggle('selected', el.dataset.id === sceneId);
+    });
+  }
+
+  function setScene(id) {
+    sceneId = id && sceneById.has(id) ? id : (id || null);
+    store('gtaScene', sceneId);
+    const sc = sceneById.get(sceneId);
+    const name = sc ? sc.title : '';
+    document.querySelectorAll('.scene-name').forEach((el) => { el.textContent = name || '–'; });
+    if (sc) {
+      $('chosenScene').querySelector('.chosen-title').textContent = sc.title;
+      fillThumb($('chosenScene').querySelector('.chosen-thumb'), sc);
+    }
+    markSelected();
+  }
+
+  function showScenePicker() {
+    markSelected();
+    show('scene');
+  }
+
+  function selectScene(id) {
+    setScene(id);
+    showCapture();
+  }
+
   // ---------- pristanak ----------
 
   function updateConsentButton() {
@@ -106,7 +219,8 @@
         }),
       });
       setSession(data.id, data.code);
-      showCapture();
+      setScene(null);
+      showScenePicker();
     } catch (e) {
       $('e-consent').textContent = e.message;
       $('e-consent').classList.remove('hidden');
@@ -117,6 +231,7 @@
   // ---------- slikanje ----------
 
   function showCapture(errorText) {
+    if (!sceneById.has(sceneId)) return showScenePicker();
     photoBlob = null;
     $('previewBox').classList.add('hidden');
     $('f-camera').value = '';
@@ -172,13 +287,14 @@
 
   async function sendPhoto() {
     if (!photoBlob || !sessionId) return;
+    if (!sceneById.has(sceneId)) return showScenePicker();
     const btn = $('b-send');
     btn.disabled = true;
     btn.textContent = 'Šaljem…';
     try {
       const st = await api('/api/s/' + sessionId + '/photo', {
         method: 'POST',
-        headers: { 'content-type': 'image/jpeg', 'x-photo-size': photoSize },
+        headers: { 'content-type': 'image/jpeg', 'x-photo-size': photoSize, 'x-scene': sceneId },
         body: photoBlob,
       });
       render(st);
@@ -197,9 +313,9 @@
 
   const genTexts = [
     'Ovo traje do jednog minuta.',
-    'Crtamo konture…',
-    'Dodajemo zalazak sunca…',
-    'Palme na svoje mesto…',
+    'Postavljamo scenu…',
+    'Pravimo tvoj lik…',
+    'Podešavamo svetlo…',
     'Još samo malo…',
   ];
   let genTextIdx = 0;
@@ -210,6 +326,7 @@
 
   function render(st) {
     if (st.code) sessionCode = st.code;
+    if (st.scene && st.scene !== sceneId) setScene(st.scene);
     $('demoBadge').classList.toggle('hidden', !st.demo);
     const prev = lastStatus;
     lastStatus = st.status;
@@ -320,6 +437,7 @@
     lastStatus = null;
     resultUrl = null;
     resultBlob = null;
+    setScene(null);
     ['c-age', 'c-consent', 'c-social'].forEach((id) => { $(id).checked = false; });
     updateConsentButton();
     show('consent');
@@ -348,8 +466,12 @@
     $('b-save').addEventListener('click', saveResult);
     $('b-restart').addEventListener('click', restart);
     $('b-delete').addEventListener('click', deleteMyData);
+    $('b-scene-change').addEventListener('click', showScenePicker);
 
-    const cfg = await loadConfig();
+    const [cfg] = await Promise.all([loadConfig(), loadScenes()]);
+    // Izbor scene preživljava osvežavanje stranice pre slanja fotografije.
+    const savedScene = load('gtaScene');
+    if (savedScene && sceneById.has(savedScene)) setScene(savedScene);
 
     const fromHash = (location.hash.match(/s=([A-Za-z0-9_-]{20,40})/) || [])[1];
     const existing = fromHash || load('gtaSession');

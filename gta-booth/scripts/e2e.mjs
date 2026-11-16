@@ -213,6 +213,34 @@ q5 = await call('/api/admin/queue', { token });
 check('neispravna dimenzija se ignoriše (podrazumevani format)', q5.data.pending.find((p) => p.id === s5.id)?.photo_aspect === null);
 await decide('reject', s5.id, token);
 
+// --- scene (izbor scene od 17. 11. 2026) ---
+console.log('Scene');
+r = await call('/api/scenes');
+const sceneList = r.data?.scenes || [];
+check('lista scena: 15 scena', r.status === 200 && sceneList.length === 15, JSON.stringify(r.data).slice(0, 200));
+check('lista scena ne otkriva promptove', sceneList.every((sc) => !('prompt' in sc)));
+check('svaka scena ima sličicu /scene/<id>.jpg', sceneList.every((sc) => sc.image === `/scene/${sc.id}.jpg`));
+check('scena 05 je položena 16:9, scena 03 uspravna 3:4',
+  sceneList.find((sc) => sc.id === '05')?.aspect === '16:9' && sceneList.find((sc) => sc.id === '03')?.aspect === '3:4');
+const s6 = await newSession();
+r = await call(`/api/s/${s6.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 21), headers: { 'content-type': 'image/jpeg', 'x-scene': '99' } });
+check('nepostojeća scena odbijena (400)', r.status === 400);
+r = await call(`/api/s/${s6.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 22), headers: { 'content-type': 'image/jpeg', 'x-scene': '05', 'x-photo-size': '1200x1600' } });
+check('fotografija sa scenom prihvaćena', r.status === 200 && r.data.status === 'pending' && r.data.scene === '05', JSON.stringify(r.data));
+let q6 = await call('/api/admin/queue', { token });
+let p6 = q6.data.pending.find((p) => p.id === s6.id);
+check('tablet vidi scenu, naziv i format', p6?.scene === '05' && /klubu/.test(p6?.scene_title || '') && p6?.scene_aspect === '16:9', JSON.stringify(p6));
+r = await call(`/api/s/${s6.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 23), headers: { 'content-type': 'image/jpeg', 'x-scene': '14' } });
+q6 = await call('/api/admin/queue', { token });
+p6 = q6.data.pending.find((p) => p.id === s6.id);
+check('promena scene stiže sa novom fotografijom', p6?.scene === '14' && r.data.scene === '14');
+await decide('approve', s6.id, token);
+r = await waitStatus(s6.id, ['done', 'failed']);
+check('scena generisana', r.data.status === 'done' && r.data.scene === '14');
+q6 = await call('/api/admin/queue', { token });
+check('scena vidljiva i u listi "gotovo"', q6.data.recent.some((x) => x.id === s6.id && x.scene === '14' && x.scene_title));
+console.log('    SCENE_CHECK_LOG: u logu servera treba "mock generate aspect=3:4 prompt=Use the person"');
+
 // --- pauza ---
 console.log('Pauza');
 r = await call('/api/admin/pause', { method: 'POST', token, body: { paused: true } });

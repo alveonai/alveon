@@ -33,8 +33,9 @@ Kad piše `Ready on http://localhost:8787`, otvorite dva prozora u browseru:
 
 **Šta probati:**
 - [ ] Gost: bez obe kućice dugme „Nastavi” ne radi
-- [ ] Gost: izaberite sliku iz galerije, pošaljite, zapamtite kod (npr. `ETD`)
-- [ ] Tablet: pojavi se kartica sa istim kodom i zvukom
+- [ ] Gost: posle pristanka lista od 15 scena; dodir na scenu vodi na slikanje (gore piše izabrana scena, „Promeni” vraća na listu)
+- [ ] Gost: izaberite sliku iz galerije, pošaljite, zapamtite kod (npr. `ETD`); ispod koda piše naziv scene
+- [ ] Tablet: pojavi se kartica sa istim kodom i zvukom, i sa „Scena N: naziv (format)”
 - [ ] Gost pošalje drugu fotografiju dok kartica stoji: kartica se osveži; ✅ uvek ide za prikazanu fotografiju
 - [ ] Tablet ✅: gost vidi „Pravimo tvoj lik…”, pa sliku posle ~4 s
 - [ ] Gost: „Sačuvaj sliku”, osvežavanje stranice (ostaje na slici)

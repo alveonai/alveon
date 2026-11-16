@@ -11,7 +11,9 @@ Sve za projekat je u ovom folderu.
 | **Postavljanje na Cloudflare i kontrolna lista za event** | `gta-booth/README.md` |
 | **Odgovor nezavisnog recenzenta** (na plan v1) | `gta-booth/docs/recenzija-1.md` |
 | **Snimci ekrana** (telefon i tablet) | `gta-booth/docs/snimci-ekrana/` |
-| Prompt za AI | `gta-booth/src/prompt.js` |
+| **Scene i njihovi promptovi** (gost bira scenu) | `gta-booth/src/scenes.js` |
+| **Slike scena: gde i kako dodati** | `gta-booth/SLIKE_SCENA.md` (slike u `gta-booth/public/scene/`) |
+| Podrazumevani prompt (samo ako scena nije poslata) | `gta-booth/src/prompt.js` |
 | Podešavanja (limit, rokovi brisanja, model…) | `gta-booth/wrangler.toml` |
 
 `index.html` u ovom folderu je postojeći Alveon sajt iz repozitorijuma; nije deo
