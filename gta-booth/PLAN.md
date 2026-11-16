@@ -178,7 +178,7 @@ gta-booth/
 | # | Ekran | Šta se dešava |
 |---|---|---|
 | 1 | **Pristanak** | Kratak tekst (AI obrada preko Google Gemini API, nema treniranja, Google može čuvati do 55 dana radi bezbednosti, original se briše najkasnije 60 min posle generisanja, rezultat posle 7 dana, pristanak se može povući; link ka punom obaveštenju). Dve kućice: **„Imam 18 ili više godina”** (obavezno) i **„Pristajem na obradu moje fotografije AI alatom”** (obavezno). Treća, za objavu na mrežama, postoji u kodu ali je isključena (3.7). Dugme „Nastavi” je neaktivno dok obe obavezne nisu štiklirane; server ponovo proverava. |
-| 1a | **Izbor scene** (od 17. 11.) | 15 scena u tri grupe (dokument agencije, vidi 9.1): polje sa slikom (`/scene/<id>.jpg`; dok slika ne postoji, obojeno polje sa brojem), naziv, oznaka „uspravna/položena”, a za scene sa više likova „ti + izmišljeni partner/ekipa”. Dodir na scenu vodi na slikanje. Izbor se pamti u `localStorage` do slanja. |
+| 1a | **Izbor scene** (od 17. 11.) | 14 scena u tri grupe (dokument agencije, vidi 9.1): polje sa slikom (`/scene/<id>.jpg`; dok slika ne postoji, obojeno polje sa brojem), naziv, oznaka „uspravna/položena”, a za scene sa više likova „ti + izmišljeni partner/ekipa”. Dodir na scenu vodi na slikanje. Izbor se pamti u `localStorage` do slanja. |
 | 2 | **Slikanje** | Na vrhu izabrana scena i dugme „Promeni”. Saveti iz dokumenta (pravo u kameru, dobro svetlo, bez naočara i kape, lice zauzima dobar deo kadra, jedna osoba). Dugme „Otvori kameru” (`<input type=file accept=image/* capture=user>`, prednja kamera) i „Izaberi iz galerije”. Fotografija se na telefonu umanji na najviše 1600 px po dužoj strani i ponovo kodira u JPEG (kvalitet 0.85), čime se uklanjaju EXIF podaci (lokacija, uređaj). Prikaz pregleda, „Pošalji na odobrenje” / „Slikaj ponovo”. |
 | 3 | **Čeka odobrenje** | Veliki kod od 3 znaka (npr. `ETD`) koji gost pokazuje osoblju, naziv scene, pozicija u redu, dugme „Promeni fotografiju”. |
 | 4 | **Generisanje** | Animacija i poruke koje se smenjuju (do ~1 min). |
@@ -318,12 +318,12 @@ Prethodni prompt (v2, ilustracija, bez imena igre) je u git istoriji (`src/promp
 
 ### 9.1 Scene (od 17. 11. 2026)
 
-Izvor: Word dokument agencije „GTA promptovi za Nano Banana” (16. 11. 2026). `src/scenes.js` je napravljen automatski iz dokumenta (bez prekucavanja): 15 scena, prompt svake doslovno, sa prelomima redova.
+Izvor: Word dokument agencije „GTA promptovi za Nano Banana” (16. 11. 2026). `src/scenes.js` je napravljen automatski iz dokumenta (bez prekucavanja): 15 scena, prompt svake doslovno, sa prelomima redova. **Scena 02 (GTA VI key art) izbačena 17. 11.** (odluka agencije: nema primer sliku, a prezentacija klijentu navodi 14 stilova); u aplikaciji je **14 scena**, ostale zadržavaju svoj broj (01, 03–15), a prva grupa se zove „GTA V”.
 
 | # | Scena | Likova | Format |
 |---|---|---|---|
 | 01 | GTA V: ulica u Los Santosu | 1 | 4:5 |
-| 02 | GTA VI ilustracija (key art) | 1 | 4:5 |
+| ~~02~~ | ~~GTA VI ilustracija (key art)~~ (izbačena) | 1 | 4:5 |
 | 03 | Motor, bežiš od policije | 1 | 3:4 |
 | 04 | Naslonjen na prozor auta | 1–2 | 3:4 |
 | 05 | Napeti susret u zadimljenom klubu | 1 | 16:9 |
@@ -480,7 +480,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | R22 | Bez objave na mrežama (3.7): agencija nema slike za svoje kanale. | Odluka agencije. |
 | R25 | Scene imenuju igru i izdavača (GTA V/VI, San Andreas, Rockstar, Vice City, Los Santos) i opisuju policiju, pljačku, novac. Moguća odbijanja filtera i zaštićeni elementi na slikama (npr. HUD scene 15). | Promptovi agencije, doslovno (odluka agencije). Sve scene osim 15 traže „No HUD, no text” i zabranjuju oružje, krv, alkohol. Proveriti svaku scenu bar jednom na pravom Gemini-ju pre eventa; scenu koja se odbija ili daje loš rezultat skloniti iz `src/scenes.js`. |
 | R26 | Scene sa više likova: gost šalje jednu fotografiju; ostali likovi su izmišljeni. Gost u grupi može očekivati da budu svi. | Oznaka na kartici „ti + izmišljeni partner/ekipa”; savet „samo jedna osoba na slici”. Više fotografija po gostu nije urađeno. |
-| R27 | Sličice scena: 14 od 15 preuzeto iz prezentacije za klijenta (17. 11., uparivanje u `SLIKE_SCENA.md`); **scena 02 (key art) nema sliku**. Natpisi u prezentaciji se delom razlikuju od naziva scena u aplikaciji (npr. „Kazino” = Kiša novca, „Noćna potera” = Motor), a prezentacija pominje 14 stilova, aplikacija ima 15. | Bez slike radi (obojeno polje sa brojem). Sliku za 02 šalje agencija. Posle dodavanja slika na Cloudflare: ponovo `npm run deploy`. |
+| R27 | Sličice scena: 14 od 15 preuzeto iz prezentacije za klijenta (17. 11., uparivanje u `SLIKE_SCENA.md`); **scena 02 (key art) nije imala sliku i izbačena je**. Natpisi u prezentaciji se delom razlikuju od naziva scena u aplikaciji (npr. „Kazino” = Kiša novca, „Noćna potera” = Motor), broj stilova se sada poklapa (14). | Bez slike radi (obojeno polje sa brojem). Sliku za 02 šalje agencija. Posle dodavanja slika na Cloudflare: ponovo `npm run deploy`. |
 | R23 | Najbliži podržani format nije uvek tačan format fotografije (npr. 1080×1350 je tačno 4:5, ali neobičan format se zaokružuje). | Razlika je mala; slika se ne seče, model kadrira u izabranom formatu. |
 | R13 | Nema serverske provere da je na slici jedna punoletna osoba; oslanja se na osoblje. | Svesna odluka. |
 | R14 | „Obriši sve podatke” je nepovratno. | Potvrda upisom reči. |
@@ -524,7 +524,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi; ✅ lokalno na računaru agencije (57/57, ručni test, telefon preko tunela); ✅ ključ besplatnog nivoa: kvota za slike 0 (14, tačka 10); ✅ prompt v3 (agencija) |
 | Ned 15. 11. | **Prvo:** uključiti billing na Google projektu (bez njega nema slika), logovanje isključeno → **test prompta v3** (10–20 slika, trajanje, odbijanja, logo/oružje) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
 | Pon 16. 11. | Test na pravim telefonima (uputstvo: `TESTIRANJE.md`): iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen |
-| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67. Zatim: sličice scena (agencija), **test svake scene na pravom Gemini-ju**, postavljanje na Cloudflare, proba u tržnom centru (signal, ring svetlo, QR); zaključavanje koda uveče |
+| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67; ✅ sličice iz prezentacije; ✅ scena 02 izbačena (14 scena). Zatim: sličice scena (agencija), **test svake scene na pravom Gemini-ju**, postavljanje na Cloudflare, proba u tržnom centru (signal, ring svetlo, QR); zaključavanje koda uveče |
 | Sre 18. 11. | Event |
 
 **Rezervni plan:** ako aplikacija nije stabilna do ponedeljka uveče, osoblje ručno generiše slike i deli ih gostima.

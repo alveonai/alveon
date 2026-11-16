@@ -1,6 +1,6 @@
 # Slike (sličice) scena
 
-Gost posle pristanka bira jednu od 15 scena. Svaka scena ima svoje polje sa slikom.
+Gost posle pristanka bira jednu od 14 scena (scena 02 je izbačena 17. 11.; ostale zadržavaju svoj broj). Svaka scena ima svoje polje sa slikom.
 Dok slika ne postoji, polje je obojeno i prikazuje broj scene; čim dodate sliku, ona se
 pojavi umesto broja. **Kod se ne menja.**
 
@@ -13,7 +13,6 @@ Ime fajla = broj scene sa dve cifre, format **JPG**:
 | Fajl | Scena |
 |---|---|
 | `01.jpg` | GTA V: ulica u Los Santosu |
-| `02.jpg` | GTA VI ilustracija (key art) |
 | `03.jpg` | Motor, bežiš od policije |
 | `04.jpg` | Naslonjen na prozor auta |
 | `05.jpg` | Napeti susret u zadimljenom klubu |
@@ -40,7 +39,7 @@ natpisu u prezentaciji:
 | Scena | Slika iz prezentacije (strana, natpis) |
 |---|---|
 | 01 GTA V: ulica u Los Santosu | str. 9, „GTA V” |
-| **02 GTA VI ilustracija (key art)** | **nema odgovarajuće slike: polje je prazno (broj)** |
+| ~~02 GTA VI ilustracija (key art)~~ | izbačena iz aplikacije (nije bilo slike) |
 | 03 Motor, bežiš od policije | str. 6, „Noćna potera” |
 | 04 Naslonjen na prozor auta | str. 7, natpis „Pumpa, dan” |
 | 05 Napeti susret u zadimljenom klubu | str. 7, natpis „Garaža” |

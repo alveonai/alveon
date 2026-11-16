@@ -1,4 +1,5 @@
 // Scene koje gost bira. Izvor: Word dokument „GTA promptovi za Nano Banana” (16. 11. 2026).
+// Scena 02 (GTA VI key art) je izbačena 17. 11. 2026 (odluka agencije); ostale zadržavaju svoj broj.
 // Fajl je napravljen automatski iz dokumenta; prompt svake scene je doslovno iz dokumenta,
 // osim mesta za popunu „[npr. …]”, gde je upisana predložena vrednost.
 //
@@ -10,18 +11,10 @@ export const SCENES = [
   {
     "id": "01",
     "title": "GTA V: ulica u Los Santosu",
-    "group": "GTA V i GTA VI ilustracija",
+    "group": "GTA V",
     "maxChars": 1,
     "aspect": "4:5",
     "prompt": "Transform the person in the uploaded photo into a realistic in-game screenshot in the style of Grand Theft Auto V (with modern graphics mods), keeping their exact facial features, face shape, hairstyle, skin tone, gender and body proportions so they are clearly recognizable.\n\nRender the person as a 3D video game character model: slightly smoothed skin with game-engine texture detail, realistic but clearly CGI shading, sharp specular highlights, crisp edges. Keep their outfit from the original photo, but render the fabric with game-quality textures.\n\nPlace them standing in the middle of a sunny Los Santos street (inspired by Los Angeles): cracked asphalt with a faded yellow center line, tall palm trees lining the road, utility poles with power lines, low brick storefronts, a retro roadside sign on a tall pole, parked cars on both sides (a white muscle car and a red 80s sedan), a police cruiser in the distance, hazy mountains on the horizon.\n\nLighting: bright midday California sun, clear blue sky, strong hard shadows, warm slightly saturated colors, light atmospheric haze, high contrast, ray-traced reflections on cars.\n\nCamera: third-person game camera, eye level, full body shot, character centered and facing the camera, neutral relaxed pose with arms at the sides, wide-angle lens, vertical 4:5 frame. No HUD, no text, no minimap, no watermark."
-  },
-  {
-    "id": "02",
-    "title": "GTA VI ilustracija (key art)",
-    "group": "GTA V i GTA VI ilustracija",
-    "maxChars": 1,
-    "aspect": "4:5",
-    "prompt": "Transform the person in the uploaded photo into an official-style Grand Theft Auto VI key art illustration (Rockstar Games loading screen artwork style), keeping their exact facial features, face shape, eyes, nose, lips, jawline, hairstyle, facial hair, skin tone, gender and body build so they are instantly recognizable. Do not beautify, slim or change the face — only change the art style.\n\nART STYLE: semi-realistic digital painting, clean bold outlines, cel-shaded comic-book rendering with painterly detail, sharp graphic shadows, strong warm rim light on the skin, slightly exaggerated contrast, detailed hair and fabric folds. It must look like a hand-painted poster illustration, NOT a photo and NOT a 3D render.\n\nCOLORS: dreamy pastel sunset palette — purple, lavender, pink, peach and soft orange sky, warm golden sunlight on the person, cool violet-blue shadows, everything slightly tinted purple.\n\nBACKGROUND: sunny Vice City / Leonida (Miami-inspired) scene at sunset: tall palm trees as purple silhouettes, art-deco hotels and pastel high-rise buildings, power lines, a classic 70s American muscle car parked nearby, a small plane or seagulls in the sky, soft atmospheric haze.\n\nPOSE AND OUTFIT: confident cool pose, looking at the camera with a serious, determined expression. Keep the person's original outfit.\n\nCOMPOSITION: WIDE SHOT. Full body visible from head to feet, with space above the head and below the feet. The person takes up only about half of the image height and stands in the middle ground, with plenty of the environment visible around them — the street, palm trees, buildings, car and sky. Camera at eye level or slightly low, pulled back, 35mm lens. Do not crop or zoom in on the person. Vertical 4:5. No text, no logos, no watermark."
   },
   {
     "id": "03",

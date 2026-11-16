@@ -217,7 +217,7 @@ await decide('reject', s5.id, token);
 console.log('Scene');
 r = await call('/api/scenes');
 const sceneList = r.data?.scenes || [];
-check('lista scena: 15 scena', r.status === 200 && sceneList.length === 15, JSON.stringify(r.data).slice(0, 200));
+check('lista scena: 14 scena, bez izbačene 02', r.status === 200 && sceneList.length === 14 && !sceneList.some((sc) => sc.id === '02'), JSON.stringify(r.data).slice(0, 200));
 check('lista scena ne otkriva promptove', sceneList.every((sc) => !('prompt' in sc)));
 check('svaka scena ima sličicu /scene/<id>.jpg', sceneList.every((sc) => sc.image === `/scene/${sc.id}.jpg`));
 check('scena 05 je položena 16:9, scena 03 uspravna 3:4',
