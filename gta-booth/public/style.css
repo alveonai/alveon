@@ -163,10 +163,6 @@ input[type="file"] { display: none; }
 /* Slika se prikazuje tek kad se učita (nema ikonice „slomljene slike” dok sličica ne postoji). */
 .scene-thumb img, .chosen-thumb img { visibility: hidden; }
 .has-img img { visibility: visible; }
-.scene-fmt {
-  position: absolute; right: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px;
-  background: rgba(11, 7, 22, .78); color: var(--text); font-size: 12px; font-weight: 700;
-}
 .scene-body { padding: 8px 10px 10px; }
 .scene-title { display: block; font-weight: 800; font-size: 15px; line-height: 1.25; }
 .scene-extra { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }

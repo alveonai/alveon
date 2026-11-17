@@ -103,10 +103,6 @@
     img.src = sc.image;
   }
 
-  const formatLabel = (aspect) => {
-    const [w, h] = String(aspect).split(':').map(Number);
-    return w > h ? 'položena' : w < h ? 'uspravna' : 'kvadrat';
-  };
   const extraLabel = (n) => (n >= 3 ? 'ti + izmišljena ekipa' : n === 2 ? 'ti + izmišljeni partner' : '');
 
   async function loadScenes() {
@@ -145,10 +141,6 @@
       const thumb = document.createElement('div');
       thumb.className = 'scene-thumb';
       fillThumb(thumb, sc);
-      const fmt = document.createElement('span');
-      fmt.className = 'scene-fmt';
-      fmt.textContent = formatLabel(sc.aspect);
-      thumb.appendChild(fmt);
       const body = document.createElement('span');
       body.className = 'scene-body';
       const title = document.createElement('span');
