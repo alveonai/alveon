@@ -352,11 +352,14 @@ async function handleGuest(request, env, path) {
     const obj = await env.PHOTOS.get(s.result_key);
     if (!obj) return err(404, 'Slika je istekla.');
     const ext = (s.result_mime || '').includes('png') ? 'png' : 'jpg';
+    // ?download=1: dugme „Preuzmi” na tabletu (osoblje preuzima sliku za štampu).
+    const download = new URL(request.url).searchParams.get('download') === '1';
+    const name = download ? `gta-${s.code}${s.scene ? '-scena' + s.scene : ''}.${ext}` : `moj-lik-${s.code}.${ext}`;
     return new Response(obj.body, {
       headers: {
         'content-type': s.result_mime || 'image/png',
         'cache-control': 'private, max-age=3600',
-        'content-disposition': `inline; filename="moj-lik-${s.code}.${ext}"`,
+        'content-disposition': `${download ? 'attachment' : 'inline'}; filename="${name}"`,
       },
     });
   }

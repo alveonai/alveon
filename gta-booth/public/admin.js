@@ -94,10 +94,28 @@
     try {
       const q = kind === 'photo' ? '?key=' + encodeURIComponent(photoKey) : '';
       const res = await api('/api/admin/s/' + id + '/' + kind + q);
-      const url = URL.createObjectURL(await res.blob());
+      const blob = await res.blob();
+      // Rezultat je 4K (~8 MB): za sličicu u listi čuvamo samo malu kopiju, da tablet
+      // tokom večeri ne drži stotine velikih slika u memoriji.
+      const url = kind === 'result' ? await smallCopy(blob) : URL.createObjectURL(blob);
       cache.set(cacheKey, url);
       if (kind !== 'photo' || img.closest('[data-key]')?.dataset.key === photoKey) img.src = url;
     } catch (_) {}
+  }
+
+  async function smallCopy(blob, maxSide = 240) {
+    try {
+      const bmp = await createImageBitmap(blob);
+      const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * scale);
+      c.height = Math.round(bmp.height * scale);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      if (bmp.close) bmp.close();
+      return c.toDataURL('image/jpeg', 0.8);
+    } catch (_) {
+      return URL.createObjectURL(blob); // stariji browser: puna slika
+    }
   }
 
   function ago(ts, serverTime) {
@@ -203,7 +221,13 @@
         b.className = 'btn secondary';
         b.textContent = '▦ QR za preuzimanje';
         b.addEventListener('click', () => showDownloadQr(r.id, r.code));
-        tdAct.appendChild(b);
+        // Preuzimanje pune slike na ovaj uređaj (osoblje, za štampu).
+        const d = document.createElement('a');
+        d.className = 'btn secondary';
+        d.textContent = '⬇ Preuzmi';
+        d.href = '/api/s/' + encodeURIComponent(r.id) + '/result?download=1';
+        d.setAttribute('download', '');
+        tdAct.append(b, d);
       }
       if (r.status === 'failed' || r.status === 'limit') {
         const b = document.createElement('button');

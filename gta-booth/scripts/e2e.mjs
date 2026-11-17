@@ -135,6 +135,9 @@ const res = await call(`/api/s/${s1.id}/result`, { raw: true });
 const resBytes = new Uint8Array(await res.arrayBuffer());
 check('gost preuzima rezultat', res.status === 200 && resBytes.length === photo1.length);
 check('rezultat ima content-disposition', (res.headers.get('content-disposition') || '').includes(s1.code));
+const resDl = await call(`/api/s/${s1.id}/result?download=1`, { raw: true });
+const dlBytes = new Uint8Array(await resDl.arrayBuffer());
+check('preuzimanje za štampu (tablet): attachment, puna slika', resDl.status === 200 && /^attachment;/.test(resDl.headers.get('content-disposition') || '') && (resDl.headers.get('content-disposition') || '').includes('gta-' + s1.code) && dlBytes.length === photo1.length, resDl.headers.get('content-disposition'));
 
 r = await call('/api/admin/queue', { token });
 check('brojač generacija +1', r.data.stats.used === usedBefore + 1, `${usedBefore} -> ${r.data.stats.used}`);
@@ -220,7 +223,7 @@ const sceneList = r.data?.scenes || [];
 check('lista scena: 14 scena, brojevi 01–14 kao u dokumentu', r.status === 200 && sceneList.length === 14 && sceneList.every((sc, i) => sc.id === String(i + 1).padStart(2, '0')), JSON.stringify(r.data).slice(0, 200));
 check('lista scena ne otkriva promptove', sceneList.every((sc) => !('prompt' in sc)));
 check('svaka scena ima sličicu /scene/<id>.jpg', sceneList.every((sc) => sc.image === `/scene/${sc.id}.jpg`));
-check('sve scene su uspravne 4:5', sceneList.every((sc) => sc.aspect === '4:5'));
+check('sve scene su uspravne 3:4', sceneList.every((sc) => sc.aspect === '3:4'));
 const s6 = await newSession();
 r = await call(`/api/s/${s6.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 21), headers: { 'content-type': 'image/jpeg', 'x-scene': '99' } });
 check('nepostojeća scena odbijena (400)', r.status === 400);
@@ -228,7 +231,7 @@ r = await call(`/api/s/${s6.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 2
 check('fotografija sa scenom prihvaćena', r.status === 200 && r.data.status === 'pending' && r.data.scene === '04', JSON.stringify(r.data));
 let q6 = await call('/api/admin/queue', { token });
 let p6 = q6.data.pending.find((p) => p.id === s6.id);
-check('tablet vidi scenu, naziv i format', p6?.scene === '04' && /klubu/.test(p6?.scene_title || '') && p6?.scene_aspect === '4:5', JSON.stringify(p6));
+check('tablet vidi scenu, naziv i format', p6?.scene === '04' && /klubu/.test(p6?.scene_title || '') && p6?.scene_aspect === '3:4', JSON.stringify(p6));
 r = await call(`/api/s/${s6.id}/photo`, { method: 'POST', body: fakeJpeg(3000, 23), headers: { 'content-type': 'image/jpeg', 'x-scene': '13' } });
 q6 = await call('/api/admin/queue', { token });
 p6 = q6.data.pending.find((p) => p.id === s6.id);
@@ -238,7 +241,7 @@ r = await waitStatus(s6.id, ['done', 'failed']);
 check('scena generisana', r.data.status === 'done' && r.data.scene === '13');
 q6 = await call('/api/admin/queue', { token });
 check('scena vidljiva i u listi "gotovo"', q6.data.recent.some((x) => x.id === s6.id && x.scene === '13' && x.scene_title));
-console.log('    SCENE_CHECK_LOG: u logu servera treba "mock generate aspect=4:5 prompt=Use the person in the uploaded photo"');
+console.log('    SCENE_CHECK_LOG: u logu servera treba "mock generate aspect=3:4 prompt=Use the person in the uploaded photo"');
 
 // --- pauza ---
 console.log('Pauza');

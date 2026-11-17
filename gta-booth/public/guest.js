@@ -423,10 +423,23 @@
 
   // ---------- ostalo ----------
 
+  // Posle gotove slike gost može da krene ponovo (druga scena ili fotografija).
+  // Nova slika je nova sesija: ponovo pristanak, izbor scene i odobrenje osoblja.
+  function newImage() {
+    const ok = confirm(
+      'Prvo sačuvaj ovu sliku (dugme „Sačuvaj sliku”).\n\n' +
+      'Kad kreneš ispočetka, ova stranica više neće prikazivati ovu sliku. ' +
+      'Ako je ne sačuvaš, osoblje ti može pokazati QR za nju.\n\nNapravi novu sliku?',
+    );
+    if (ok) restart();
+  }
+
   function restart() {
     stopPolling();
     setSession(null);
     lastStatus = null;
+    if (resultUrl) URL.revokeObjectURL(resultUrl);
+    $('result').removeAttribute('src');
     resultUrl = null;
     resultBlob = null;
     setScene(null);
@@ -456,6 +469,7 @@
     $('b-change').addEventListener('click', () => { stopPolling(); showCapture(); });
     $('b-again').addEventListener('click', () => showCapture());
     $('b-save').addEventListener('click', saveResult);
+    $('b-new').addEventListener('click', newImage);
     $('b-restart').addEventListener('click', restart);
     $('b-delete').addEventListener('click', deleteMyData);
     $('b-scene-change').addEventListener('click', showScenePicker);

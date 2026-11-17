@@ -46,16 +46,17 @@ crons = ["*/5 * * * *"]
 # Lokalno `npm run dev` / `dev:lan` uvek idu u demo (--var PROVIDER:mock), `dev:live` u pravi režim.
 PROVIDER = "gemini"
 GEMINI_MODEL = "gemini-nano-banana-2.1"
-IMAGE_SIZE = "2K"
+# 4K: ~8 MB po slici, generisanje 30–50 s (test 17. 11.). Odluka agencije 17. 11. 2026 (slike idu i na štampu).
+IMAGE_SIZE = "4K"
 # Format izlazne slike je format izabrane scene (src/scenes.js); bez scene format
 # ulazne fotografije, a ASPECT_RATIO samo ako ni on nije poznat.
 ASPECT_RATIO = "3:4"
 
 # Limit generacija po danu (vreme po Beogradu). Ponuda: do 400 slika + rezerva za
-# ponovne pokušaje (odluka agencije 17. 11. 2026). Najviše ~$23 dnevno.
+# ponovne pokušaje (odluka agencije 17. 11. 2026). Najviše ~$51 dnevno u 4K.
 DAILY_LIMIT = "450"
-# Cena po slici u USD (Nano Banana 2.1, 2K) – samo za prikaz na tabletu.
-COST_PER_IMAGE_USD = "0.0504"
+# Cena po slici u USD (Nano Banana 2.1, 4K; 2K je 0.0504) – samo za prikaz na tabletu.
+COST_PER_IMAGE_USD = "0.113"
 # Koliko pokušaja generisanja po gostu (1 + 1 automatski ponovni).
 MAX_ATTEMPTS = "2"
 

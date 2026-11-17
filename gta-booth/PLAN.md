@@ -1,4 +1,4 @@
-# Foto-štand „Uđi u igru”: plan aplikacije za nezavisnu recenziju
+3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |3:4 |# Foto-štand „Uđi u igru”: plan aplikacije za nezavisnu recenziju
 
 > **Za recenzenta:** ovaj dokument je napisan tako da ne zahteva nikakvo prethodno znanje o eventu ni o aplikaciji. Sve odluke su navedene sa obrazloženjem. Na kraju (odeljak 17) su konkretna pitanja na koja tražimo mišljenje. Kod se nalazi u folderu `gta-booth/` pored ovog fajla. Molimo da budete kritični: cilj je da se nađu greške i rizici **pre** eventa.
 >
@@ -142,7 +142,7 @@ Kućica je u v1 postojala, ali bez toka: nema izvoza slika za agenciju, a zapis 
                                                                       │ generateContent (store:false)
                                                                       ▼
                                                   Google Gemini API (plaćeni nivo)
-                                                  model gemini-nano-banana-2.1, 2K, 3:4
+                                                  model gemini-nano-banana-2.1, 4K, 3:4
 ```
 
 - **Frontend:** čist HTML/CSS/JavaScript, bez framework-a. Jedina biblioteka je `qrcode-generator` 2.0.4 (MIT), smeštena u projekat (`public/vendor/`), bez CDN-a.
@@ -283,7 +283,7 @@ Tablet (`Authorization: Bearer <token>`):
 
 ## 9. Generisanje slike
 
-- Model: `gemini-nano-banana-2.1`, `responseModalities: ['IMAGE']`, `imageConfig: { aspectRatio: <format ulazne fotografije>, imageSize: '2K' }`, **`store: false`**, timeout 120 s (AbortController).
+- Model: `gemini-nano-banana-2.1`, `responseModalities: ['IMAGE']`, `imageConfig: { aspectRatio: <format ulazne fotografije>, imageSize: '4K' }`, **`store: false`**, timeout 120 s (AbortController).
 - **Format izlazne slike:** od 17. 11. **format izabrane scene** (iz prompta scene, vidi 9.1). Format ulazne fotografije koristi se samo ako scena nije poslata. Ranije (do 16. 11.): **format izlazne slike = format ulazne** (odluka agencije). Telefon posle smanjivanja šalje dimenzije (`x-photo-size: 1200x1600`); server bira najbliži podržani format (`1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9`, poređenje u log razmeri) i čuva ga u `photo_aspect`. Primeri: iPhone 3024×4032 → 3:4, 1080×1920 → 9:16, 1600×1200 → 4:3. Ako dimenzije nisu poznate: `ASPECT_RATIO` (3:4). Samo prompt nije dovoljan, jer dokumentacija ne garantuje da model zadržava format ulaza.
 - Ulaz: tekst prompta + fotografija kao `inlineData` (JPEG, base64).
 - Ako odgovor nema sliku (bezbednosni filter i sl.): greška sa razlogom (`blockReason` / `finishReason`), uz automatski ponovni pokušaj.
@@ -338,7 +338,7 @@ Izvor: Word dokument agencije „GTA promptovi za Nano Banana (3)” (verzija od
 | 14 | Grove Street u sumrak | 1 | 4:5 |
 
 - **Tok:** gost bira scenu → scena ide uz fotografiju (zaglavlje `x-scene`, server proverava da scena postoji, inače 400) → čuva se u `sessions.scene` → tablet prikazuje „Scena N: naziv (format)” na kartici i u listi → AI dobija prompt i format scene. Scena se menja **samo zajedno sa novom fotografijom** (nova verzija `photo_key`), pa osoblje uvek odobrava par fotografija + scena koji je videlo.
-- **Format:** iz prompta scene („Vertical 4:5”); od verzije (3) dokumenta **sve scene su uspravne 4:5** (ranije 3:4 i 16:9). Ovo menja raniju odluku „izlaz = format ulaza” (9, gore).
+- **Format:** iz prompta scene. **Sve scene su 3:4** (odluka agencije 17. 11.): dokument (3) piše 4:5, pa generator u promptu menja samo „4:5” u „3:4” (ostatak prompta doslovno). Ranije: 4:5, pre toga 3:4 i 16:9. Ovo menja raniju odluku „izlaz = format ulaza” (9, gore).
 - **Jedna fotografija po gostu:** dokument predviđa i više fotografija za scene sa više likova (Slika 1 = Lik A…). Aplikacija šalje **jednu** fotografiju; prema pravilima samog dokumenta gost je tada Lik A, a ostali likovi su izmišljeni. Više fotografija po gostu (grupe) **nije urađeno** (rizik pred event).
 - **Mesta za popunu** „[npr. …]” u scenama 4, 5 i 11 (odeća) zamenjena su predloženom vrednošću iz dokumenta (npr. „Outfit: worn off-white t-shirt, black watch.”).
 - **Scena 14** po dokumentu traži HUD sa tekstom (sat, novac); varijante „bez HUD-a” i „PS2 izgled” iz dokumenta nisu posebne scene.
@@ -392,7 +392,7 @@ Prompt još **nije testiran** na pravom modelu (nema API ključa). **Test prompt
 
 | Stavka | Iznos |
 |---|---|
-| Gemini, 300 gostiju × $0.0504 (2K) | $15.12 |
+| Gemini, 300 gostiju × $0.113 (4K; od 17. 11.) | $33.90 |
 | Rezerva 20% (ponovni pokušaji) | ~$3 |
 | Testiranje prompta | ~$3 |
 | **Ukupno Gemini** | **~$21** |
@@ -410,9 +410,9 @@ Ako se doda „Probaj još jednom”: najviše ~$36 za Gemini.
 |---|---|---|
 | PROVIDER | `mock` → `gemini` | Demo ili pravo generisanje |
 | GEMINI_MODEL | `gemini-nano-banana-2.1` | |
-| IMAGE_SIZE / ASPECT_RATIO | `2K` / `3:4` | |
+| IMAGE_SIZE / ASPECT_RATIO | `4K` / `3:4` | 4K od 17. 11. (štampa); ~8 MB po slici, 30–50 s |
 | DAILY_LIMIT | 360 | Generacija po danu (Beograd) |
-| COST_PER_IMAGE_USD | 0.0504 | Samo za prikaz |
+| COST_PER_IMAGE_USD | 0.113 | Samo za prikaz (4K; 2K je 0.0504) |
 | MAX_ATTEMPTS | 2 | 1 + 1 automatski |
 | TRANSIENT_DELAYS_S | 5,15,30,60 | Pauze pri 429/503 (ne troše pokušaj) |
 | SOCIAL_CONSENT_ENABLED | 0 | Kućica za objavu na mrežama (3.7) |
@@ -450,8 +450,11 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 13. **Postavljanje na Cloudflare (17. 11.):** https://gta-booth.gta-booth.workers.dev. D1 `gta-booth-db` (eeur, tabele i kolona `scene` provereni), R2 `gta-booth-photos` (eeur), Queue `gta-booth-jobs`, cron */5. Tajne `GEMINI_API_KEY` (iz `.dev.vars`, nije prikazan) i `ADMIN_PIN` (novi, uneo ga je korisnik). `PROVIDER=gemini`, `DAILY_LIMIT=450`, rukovalac „Petar Popović PR Beograd (Alveon)”, info@alveonai.com. Provereno bez generisanja: `/api/config` (demo:false, naziv, e-mail), `/api/scenes` (14, bez promptova), sličice, `/admin`, `/qr` (QR vodi na stalnu adresu), `/privatnost`, pogrešan PIN → 401. Lokalno posle promene `database_id`: `npm run db:local`, e2e 67/67.
 14. **Novi promptovi, dokument (3) (17. 11.):** 13 od 14 promptova promenjeno, sve scene 4:5, brojevi 01–14 kao u dokumentu, sličice prenumerisane. e2e **67/67** (provere scena prilagođene: brojevi 01–14, svi 4:5, scena 04 „klub”, promena na 13). U logu: scena 13 → `aspect=4:5` i njen prompt. Telefon (375×812): 14 sličica učitano, svaka pod svojim naslovom. Postavljeno na Cloudflare (verzija e6d40312), `/api/scenes` vraća 01–14 (4:5), sličice 02/13/14 iste veličine kao lokalno, `/scene/15.jpg` 404.
 
+15. **Test na pravom Gemini-ju (17. 11.):** ista fotografija 2× 2K i 2× 4K (dve osobe): rezolucija ne menja kompoziciju ni sličnost (razlika između dve 2K slike ista kao između 2K i 4K); 4K 30–50 s, ~8 MB. Svih 14 scena u 4K sa jednom fotografijom: nijedno odbijanje ni greška; slabosti: „ulepšano” lice (02, 13), Coca-Cola logo kod izmišljenog lika (12), sitno lice u širokim kadrovima (01, 11, 14). Slike u `test-rezolucija/` (van git-a).
+16. **3:4, 4K, preuzimanje, nova slika (17. 11.):** sve scene 3:4 (u promptu i u `aspect`), `IMAGE_SIZE=4K`, `COST_PER_IMAGE_USD=0.113`. Tablet: dugme **⬇ Preuzmi** pored „QR za preuzimanje” (`/api/s/<id>/result?download=1`, `attachment`, ime `gta-<kod>-scena<NN>.jpg`, puna slika za štampu); sličice u listi „gotovo” se čuvaju kao male kopije (~10 KB), ne kao pune 4K slike. Gost: na gotovoj slici dugme **↩ Napravi novu sliku** (upozorenje da prvo sačuva sliku; nova sesija: pristanak → scena → slika → odobrenje). e2e **68/68** (+1: preuzimanje za štampu). Browser: dugme gosta vodi na pristanak i briše vezu sa starom sesijom; tablet prikazuje „⬇ Preuzmi”, preuzimanje vraća `attachment; filename="gta-H3W-scena05.jpg"`. Postavljeno (verzija f7450b1c).
+
 **Nije testirano:**
-- **scene na pravom Gemini-ju** (kvalitet, prepoznatljivost, odbijanja zbog imena igre i scena sa policijom/novcem, trajanje, poštovanje formata 4:5);
+- **scene na pravom Gemini-ju** (kvalitet, prepoznatljivost, odbijanja zbog imena igre i scena sa policijom/novcem, trajanje, poštovanje formata 3:4);
 - pravo generisanje: stvarni Gemini limiti plaćenog nivoa;
 - telefoni: jedan telefon agencije prošao (9); preostalo: drugi OS (iOS/Android), Google Lens, Instagram in-app browser;
 - produkcijski Cloudflare: pravo generisanje na produkciji (CPU, Queues, cron); adresa je `*.workers.dev`, bez sopstvenog domena;
@@ -487,6 +490,8 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | R14 | „Obriši sve podatke” je nepovratno. | Potvrda upisom reči. |
 | R15 | Rukovanje brendom/zaštićenim znakom igre i pravo na korišćenje teme. | Stranice ne prikazuju ime ni logo. **Prompt v3 imenuje igru** (GTA VI, Vice City) i ne zabranjuje logo/natpis, pa model može da doda zaštićeni logo na slike gostiju. Licenca eventa nepoznata (16, pitanje 1). Proveriti u testu prompta. |
 | R24 | Iscrpljena ili nulta Gemini kvota (npr. dnevna, ili besplatni nivo) vraća 429 kao i gužva; aplikacija je tretira kao prolaznu: ~2 min ponavljanja, pa „preopterećen”. Osoblje bi čekalo nešto što neće proći. | Predlog: poruke sa „per day” / „limit: 0” odmah u `failed` sa jasnom porukom „kvota iscrpljena”. Čeka odluku agencije. |
+| R28 | **4K slike (~8 MB):** gost preuzima 8 MB na mobilnom internetu u tržnom centru; tablet za sličicu takođe preuzme celu sliku (~3 GB za 400 gostiju preko 4G rutera). | Odluka agencije (štampa). Sličice na tabletu se čuvaju umanjene (memorija OK); protok ostaje. Ako signal bude problem: vratiti `IMAGE_SIZE` na 2K i ponovo postaviti. |
+| R29 | „Napravi novu sliku”: jedan gost može napraviti više slika. | Svaku sliku i dalje odobrava osoblje; dnevni limit važi. |
 | R16 | Rok: 4 dana, uključujući vikend. | Rezervni plan: ručno generisanje na štandu. |
 | R17 | Kod trenutno nije na GitHub-u (Claude nema push pristup repozitorijumu agencije). | Lokalni commit i zip postoje; rešava agencija. |
 
@@ -525,7 +530,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi; ✅ lokalno na računaru agencije (57/57, ručni test, telefon preko tunela); ✅ ključ besplatnog nivoa: kvota za slike 0 (14, tačka 10); ✅ prompt v3 (agencija) |
 | Ned 15. 11. | **Prvo:** uključiti billing na Google projektu (bez njega nema slika), logovanje isključeno → **test prompta v3** (10–20 slika, trajanje, odbijanja, logo/oružje) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
 | Pon 16. 11. | Test na pravim telefonima (uputstvo: `TESTIRANJE.md`): iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen |
-| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67; ✅ sličice iz prezentacije; ✅ scena 02 izbačena (14 scena); ✅ **postavljeno na Cloudflare** (14, tačka 13), limit 450; ✅ novi promptovi iz dokumenta (3), sve 4:5, postavljeno. Odloženo (agencija): test svake scene na pravom Gemini-ju i ispravka promptova. Zatim: ✅ probna slika na produkciji (agencija: radi), ✅ logovanje u AI Studiju isključeno (GenerateContent i Interactions, retention 7 dana; aplikacija i dalje šalje store:false), štampa novog QR-a, proba u tržnom centru (signal, ring svetlo) |
+| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67; ✅ sličice iz prezentacije; ✅ scena 02 izbačena (14 scena); ✅ **postavljeno na Cloudflare** (14, tačka 13), limit 450; ✅ novi promptovi iz dokumenta (3), postavljeno; ✅ testovi na pravom Gemini-ju (14, tačka 15); ✅ sve scene 3:4, 4K, dugme „Preuzmi” na tabletu, „Napravi novu sliku” za gosta (14, tačka 16). Odloženo (agencija): test svake scene na pravom Gemini-ju i ispravka promptova. Zatim: ✅ probna slika na produkciji (agencija: radi), ✅ logovanje u AI Studiju isključeno (GenerateContent i Interactions, retention 7 dana; aplikacija i dalje šalje store:false), štampa novog QR-a, proba u tržnom centru (signal, ring svetlo) |
 | Sre 18. 11. | Event |
 
 **Rezervni plan:** ako aplikacija nije stabilna do ponedeljka uveče, osoblje ručno generiše slike i deli ih gostima.
