@@ -81,7 +81,7 @@ Dok `npm run dev` radi, u drugom terminalu:
 BASE=http://127.0.0.1:8787 PIN=123456 npm run test:e2e
 ```
 
-Očekivano: `57 prošlo, 0 palo`. (Windows PowerShell:
+Očekivano: `67 prošlo, 0 palo`. (Windows PowerShell:
 `$env:BASE="http://127.0.0.1:8787"; $env:PIN="123456"; npm run test:e2e`)
 
 Testovi grešaka, limita i Google 429 su u `README.md`.
@@ -101,6 +101,9 @@ Automatske testove (`npm run test:e2e`) pokrećite samo uz `npm run dev` (demo),
 `dev:live`, i posle „Obriši sve podatke” na tabletu (zaostali zahtevi menjaju poziciju u redu).
 
 Ovo je način da se testira prompt pre postavljanja na Cloudflare.
+
+Ako lokalno odmah dobijate „Greška servera”: jednom pokrenite `npm run db:local`
+(lokalna baza bez tabela, npr. posle promene `database_id` u `wrangler.toml`).
 
 ## Ispočetka
 

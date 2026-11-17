@@ -98,6 +98,7 @@ broj generisanih slika i procenu troška. Najviše 360 slika dnevno (zaštita u 
 | Tablet: greška 400/401/403 | Ključ ne važi ili je obrisan. Proverite red `GEMINI_API_KEY=` u fajlu `.dev.vars` (otvoriti u Notepad-u). |
 | Telefon ne otvara adresu | Proverite da je prozor sa tunelom otvoren i da ste prekucali tačnu, **današnju** adresu. |
 | Pogrešan PIN | PIN je u fajlu `.dev.vars`, red `ADMIN_PIN=`. |
+| Lokalno „Greška servera” odmah na početku | Lokalna baza nema tabele (npr. posle promene `database_id`). Jednom upišite `npm run db:local`, pa ponovo pokrenite server. |
 | Sve od početka (prazna baza) | Ugasite server, obrišite folder `.wrangler` u `gta-booth`, upišite `npm run setup:local`, pa ponovo `npm run dev:live`. |
 
 Fajl `.dev.vars` je skriven ako u Explorer-u nije uključeno **View → Show → Hidden items**.
@@ -110,5 +111,6 @@ Pokretanje sa računara **nije** zamišljeno za sam event:
 - računar mora da bude uključen i na internetu celo veče;
 - nema automatskog brisanja podataka.
 
-Za event aplikacija ide na Cloudflare (stalna adresa, automatsko brisanje), po
-uputstvu u `README.md`. To se radi jednom, pre utorka.
+Za event aplikacija je **postavljena na Cloudflare** (17. 11.): https://gta-booth.gta-booth.workers.dev
+(tablet: `/admin.html`, QR za štampu: `/qr.html`). PIN za tablet na Cloudflare-u je
+drugi od lokalnog iz `.dev.vars`.

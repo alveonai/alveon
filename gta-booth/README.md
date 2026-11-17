@@ -4,10 +4,12 @@ Web aplikacija za event: gost skenira QR, prihvata uslove, slika se svojim telef
 osoblje na tabletu odobrava, AI (Google Gemini, Nano Banana 2.1) pravi stilizovanu
 sliku, gost je preuzima. Bez instalacije aplikacije.
 
-- **Gost:** `https://<domen>/`
-- **Tablet (osoblje):** `https://<domen>/admin.html` (PIN)
-- **QR za štampu:** `https://<domen>/qr.html`
-- **Privatnost:** `https://<domen>/privatnost.html`
+**Postavljeno 17. 11. 2026:** https://gta-booth.gta-booth.workers.dev (pravi režim, UŽIVO)
+
+- **Gost:** `https://gta-booth.gta-booth.workers.dev/`
+- **Tablet (osoblje):** `https://gta-booth.gta-booth.workers.dev/admin.html` (PIN je Cloudflare tajna, nije u kodu)
+- **QR za štampu:** `https://gta-booth.gta-booth.workers.dev/qr.html`
+- **Privatnost:** `https://gta-booth.gta-booth.workers.dev/privatnost.html`
 
 ## Kako radi
 
@@ -45,7 +47,7 @@ npm install
 npx wrangler login
 
 # 1. baza i skladište
-npx wrangler d1 create gta-booth-db        # upisati dobijeni database_id u wrangler.toml
+npx wrangler d1 create gta-booth-db --location eeur   # upisati dobijeni database_id u wrangler.toml (urađeno)
 npx wrangler r2 bucket create gta-booth-photos
 npx wrangler queues create gta-booth-jobs
 npm run db:remote                           # pravi tabele
@@ -75,6 +77,8 @@ dobijenu `*.workers.dev` adresu).
    ispod ~5 paralelnih zahteva, zatražiti povećanje.
 5. U `wrangler.toml`: `PROVIDER = "gemini"`, pa `npm run deploy`.
 6. Na tabletu „Režim” pokazuje **UŽIVO**.
+
+Izmena koda ili sličica scena posle postavljanja: `npm run deploy` (u PowerShell-u `npm.cmd run deploy`).
 
 Napomena: budžet u Google Cloud billing-u samo šalje upozorenje i **ne zaustavlja**
 trošak. Stvarni limit troška je `DAILY_LIMIT` u aplikaciji.

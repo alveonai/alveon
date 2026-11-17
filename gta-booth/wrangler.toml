@@ -11,11 +11,11 @@ binding = "ASSETS"
 run_worker_first = ["/api/*"]
 
 # Baza: sesije, statusi, brojač generacija.
-# Posle `wrangler d1 create gta-booth-db` upišite pravi database_id.
+# Napravljena 17. 11. 2026 (`wrangler d1 create gta-booth-db --location eeur`).
 [[d1_databases]]
 binding = "DB"
 database_name = "gta-booth-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "7f34585f-a2dc-49f9-a04f-399ee5a3a57f"
 
 # Skladište slika (originali i rezultati).
 [[r2_buckets]]
@@ -41,17 +41,19 @@ max_concurrency = 3
 crons = ["*/5 * * * *"]
 
 [vars]
+# "gemini" = pravo generisanje preko Google Gemini API-ja (postavljena aplikacija, event).
 # "mock" = demo režim (vraća originalnu sliku, ne troši ništa).
-# "gemini" = pravo generisanje preko Google Gemini API-ja.
-PROVIDER = "mock"
+# Lokalno `npm run dev` / `dev:lan` uvek idu u demo (--var PROVIDER:mock), `dev:live` u pravi režim.
+PROVIDER = "gemini"
 GEMINI_MODEL = "gemini-nano-banana-2.1"
 IMAGE_SIZE = "2K"
-# Format izlazne slike se uzima iz ulazne fotografije (najbliži podržani);
-# ASPECT_RATIO se koristi samo ako format nije poznat.
+# Format izlazne slike je format izabrane scene (src/scenes.js); bez scene format
+# ulazne fotografije, a ASPECT_RATIO samo ako ni on nije poznat.
 ASPECT_RATIO = "3:4"
 
-# Limit generacija po danu (vreme po Beogradu). 300 ljudi + 20% rezerve.
-DAILY_LIMIT = "360"
+# Limit generacija po danu (vreme po Beogradu). Ponuda: do 400 slika + rezerva za
+# ponovne pokušaje (odluka agencije 17. 11. 2026). Najviše ~$23 dnevno.
+DAILY_LIMIT = "450"
 # Cena po slici u USD (Nano Banana 2.1, 2K) – samo za prikaz na tabletu.
 COST_PER_IMAGE_USD = "0.0504"
 # Koliko pokušaja generisanja po gostu (1 + 1 automatski ponovni).
@@ -73,9 +75,9 @@ ORIGINAL_TTL_MIN = "60"
 # Rezultati i svi podaci se brišu posle ovoliko dana.
 RETENTION_DAYS = "7"
 
-# Podaci za obaveštenje o privatnosti (popuniti pre eventa).
-CONTROLLER_NAME = "[NAZIV FIRME]"
-CONTACT_EMAIL = "[EMAIL ZA PRIVATNOST]"
+# Podaci za obaveštenje o privatnosti (rukovalac kako je registrovan u APR-u).
+CONTROLLER_NAME = "Petar Popović PR Beograd (Alveon)"
+CONTACT_EMAIL = "info@alveonai.com"
 
 # Demo režim: koliko traje "generisanje".
 MOCK_DELAY_MS = "4000"

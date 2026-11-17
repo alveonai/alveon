@@ -448,12 +448,13 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 
 11. **Billing uključen (14. 11.), prompt v3 na pravom Gemini-ju:** radi (agencija: „sve radi”), preko telefona i tunela.
 12. **Izbor scene (17. 11.):** e2e **67/67** (57 + 10 novih: lista od 15 scena bez promptova, putanja sličice, format 16:9/3:4, nepostojeća scena 400, scena vidljiva na tabletu sa nazivom i formatom, promena scene sa novom fotografijom, generisanje, scena u listi „gotovo”). U logu servera: scena 14 → `aspect=3:4` i njen prompt, scena 05 → `aspect=16:9` i njen prompt; bez scene → prompt v3. Browser (emulacija telefona 375×812 + tablet): pristanak → izbor scene → slikanje → čekanje (kod + naziv scene) → tablet „Scena 5: … (16:9)” → ✅ → gost dobija sliku; sličica se prikazuje kad `/scene/05.jpg` postoji, bez nje obojeno polje bez ikonice greške. U konzoli samo 404 za sličice koje još ne postoje. `e2e-failures.mjs` nije ponovo pokrenut (logika grešaka nije menjana).
+13. **Postavljanje na Cloudflare (17. 11.):** https://gta-booth.gta-booth.workers.dev. D1 `gta-booth-db` (eeur, tabele i kolona `scene` provereni), R2 `gta-booth-photos` (eeur), Queue `gta-booth-jobs`, cron */5. Tajne `GEMINI_API_KEY` (iz `.dev.vars`, nije prikazan) i `ADMIN_PIN` (novi, uneo ga je korisnik). `PROVIDER=gemini`, `DAILY_LIMIT=450`, rukovalac „Petar Popović PR Beograd (Alveon)”, info@alveonai.com. Provereno bez generisanja: `/api/config` (demo:false, naziv, e-mail), `/api/scenes` (14, bez promptova), sličice, `/admin`, `/qr` (QR vodi na stalnu adresu), `/privatnost`, pogrešan PIN → 401. Lokalno posle promene `database_id`: `npm run db:local`, e2e 67/67.
 
 **Nije testirano:**
 - **scene na pravom Gemini-ju** (kvalitet, prepoznatljivost, odbijanja zbog imena igre i scena sa policijom/novcem, trajanje, poštovanje formata 16:9);
 - pravo generisanje: stvarni Gemini limiti plaćenog nivoa;
 - telefoni: jedan telefon agencije prošao (9); preostalo: drugi OS (iOS/Android), Google Lens, Instagram in-app browser;
-- produkcijski Cloudflare (CPU, Queues, cron, domen);
+- produkcijski Cloudflare: pravo generisanje na produkciji (CPU, Queues, cron); adresa je `*.workers.dev`, bez sopstvenog domena;
 - rad pod opterećenjem (npr. 20 gostiju zaredom);
 - cron (isticanje, ponovno slanje zaglavljenih) kroz stvarni okidač: logika postoji, okidač nije pokrenut u testu.
 
@@ -461,7 +462,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 
 | # | Rizik | Procena / ublažavanje |
 |---|---|---|
-| R1 | **CPU limit Cloudflare Workers besplatnog plana (10 ms po zahtevu).** Kodiranje/dekodiranje slika prelazi 10 ms. | **Odluka: Workers Paid ($5/mes).** Proveriti na produkciji pre eventa. |
+| R1 | **CPU limit Cloudflare Workers besplatnog plana (10 ms po zahtevu).** Kodiranje/dekodiranje slika prelazi 10 ms. | **Odluka: Workers Paid ($5/mes)**, nalog plaćen (17. 11.). Proveriti jednom slikom na produkciji pre eventa. |
 | R2 | ~~Generisanje u HTTP zahtevu tableta; prekid veze ostavlja posao zaglavljen.~~ | **Rešeno u v2:** Cloudflare Queues (3.6) + uslovni upisi (7.1) + cron koji ponovo šalje zaglavljene poslove. Preostalo: ako consumer padne usred poziva, Google naplati poziv, a posao se ponovi (najviše jedan dodatni poziv). |
 | R3 | Brojač troška računa pokrenute pozive, uključujući neuspele (osim 429/503). | Procena je konzervativna (precenjuje). |
 | R18 | ~~Zamena fotografije u trenutku odobravanja.~~ | **Rešeno u v2** (verzija fotografije, 409). Testirano. |
@@ -524,7 +525,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi; ✅ lokalno na računaru agencije (57/57, ručni test, telefon preko tunela); ✅ ključ besplatnog nivoa: kvota za slike 0 (14, tačka 10); ✅ prompt v3 (agencija) |
 | Ned 15. 11. | **Prvo:** uključiti billing na Google projektu (bez njega nema slika), logovanje isključeno → **test prompta v3** (10–20 slika, trajanje, odbijanja, logo/oružje) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
 | Pon 16. 11. | Test na pravim telefonima (uputstvo: `TESTIRANJE.md`): iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen |
-| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67; ✅ sličice iz prezentacije; ✅ scena 02 izbačena (14 scena). Zatim: sličice scena (agencija), **test svake scene na pravom Gemini-ju**, postavljanje na Cloudflare, proba u tržnom centru (signal, ring svetlo, QR); zaključavanje koda uveče |
+| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67; ✅ sličice iz prezentacije; ✅ scena 02 izbačena (14 scena); ✅ **postavljeno na Cloudflare** (14, tačka 13), limit 450. Odloženo (agencija): test svake scene na pravom Gemini-ju i ispravka promptova. Zatim: jedna probna slika na produkciji, isključiti logovanje u AI Studiju, štampa novog QR-a, proba u tržnom centru (signal, ring svetlo) |
 | Sre 18. 11. | Event |
 
 **Rezervni plan:** ako aplikacija nije stabilna do ponedeljka uveče, osoblje ručno generiše slike i deli ih gostima.
