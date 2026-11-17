@@ -1,6 +1,6 @@
 # Slike (sličice) scena
 
-Gost posle pristanka bira jednu od 14 scena (scena 02 je izbačena 17. 11.; ostale zadržavaju svoj broj). Svaka scena ima svoje polje sa slikom.
+Gost posle pristanka bira jednu od 14 scena (brojevi 01–14, isti kao u dokumentu „GTA promptovi za Nano Banana (3)”). Svaka scena ima svoje polje sa slikom.
 Dok slika ne postoji, polje je obojeno i prikazuje broj scene; čim dodate sliku, ona se
 pojavi umesto broja. **Kod se ne menja.**
 
@@ -13,19 +13,19 @@ Ime fajla = broj scene sa dve cifre, format **JPG**:
 | Fajl | Scena |
 |---|---|
 | `01.jpg` | GTA V: ulica u Los Santosu |
-| `03.jpg` | Motor, bežiš od policije |
-| `04.jpg` | Naslonjen na prozor auta |
-| `05.jpg` | Napeti susret u zadimljenom klubu |
-| `06.jpg` | Sa pit bulom kod ograde |
-| `07.jpg` | Benzinska pumpa noću |
-| `08.jpg` | Noćna vožnja |
-| `09.jpg` | Krupni plan, ruka preko lica |
-| `10.jpg` | Pljačka banke |
-| `11.jpg` | Kiša novca |
-| `12.jpg` | Kabriolet noću |
-| `13.jpg` | Ekipa u garaži |
-| `14.jpg` | Teretana, sediš na klupi |
-| `15.jpg` | Grove Street u sumrak |
+| `02.jpg` | Motor, bežiš od policije |
+| `03.jpg` | Naslonjen na prozor auta |
+| `04.jpg` | Napeti susret u zadimljenom klubu |
+| `05.jpg` | Sa pit bulom kod ograde |
+| `06.jpg` | Benzinska pumpa noću |
+| `07.jpg` | Noćna vožnja |
+| `08.jpg` | Krupni plan, ruka preko lica |
+| `09.jpg` | Pljačka banke |
+| `10.jpg` | Kiša novca |
+| `11.jpg` | Kabriolet noću |
+| `12.jpg` | Ekipa u garaži |
+| `13.jpg` | Teretana, sediš na klupi |
+| `14.jpg` | Grove Street u sumrak |
 
 Pazite na ime: `05.jpg`, ne `5.jpg`, ne `05.JPG.jpg`, ne `05.png`. (Ako Windows krije
 ekstenzije: u Explorer-u **View → Show → File name extensions**.)
@@ -39,20 +39,21 @@ natpisu u prezentaciji:
 | Scena | Slika iz prezentacije (strana, natpis) |
 |---|---|
 | 01 GTA V: ulica u Los Santosu | str. 9, „GTA V” |
-| ~~02 GTA VI ilustracija (key art)~~ | izbačena iz aplikacije (nije bilo slike) |
-| 03 Motor, bežiš od policije | str. 6, „Noćna potera” |
-| 04 Naslonjen na prozor auta | str. 7, natpis „Pumpa, dan” |
-| 05 Napeti susret u zadimljenom klubu | str. 7, natpis „Garaža” |
-| 06 Sa pit bulom kod ograde | str. 2 (bez natpisa) |
-| 07 Benzinska pumpa noću | str. 6, „Pumpa, noć” |
-| 08 Noćna vožnja | str. 1 (bez natpisa) |
-| 09 Krupni plan, ruka preko lica | str. 8, „Ulica u sumrak” |
-| 10 Pljačka banke | str. 7, „Pljačka banke” |
-| 11 Kiša novca | str. 6, „Kazino” |
-| 12 Kabriolet noću | str. 6, „Kabriolet” |
-| 13 Ekipa u garaži | str. 8, „Ekipa” |
-| 14 Teretana, sediš na klupi | str. 7, „Teretana” |
-| 15 Grove Street u sumrak | str. 9, „San Andreas” |
+| 02 Motor, bežiš od policije | str. 6, „Noćna potera” |
+| 03 Naslonjen na prozor auta | str. 7, natpis „Pumpa, dan” |
+| 04 Napeti susret u zadimljenom klubu | str. 7, natpis „Garaža” |
+| 05 Sa pit bulom kod ograde | str. 2 (bez natpisa) |
+| 06 Benzinska pumpa noću | str. 6, „Pumpa, noć” |
+| 07 Noćna vožnja | str. 1 (bez natpisa) |
+| 08 Krupni plan, ruka preko lica | str. 8, „Ulica u sumrak” |
+| 09 Pljačka banke | str. 7, „Pljačka banke” |
+| 10 Kiša novca | str. 6, „Kazino” |
+| 11 Kabriolet noću | str. 6, „Kabriolet” |
+| 12 Ekipa u garaži | str. 8, „Ekipa” |
+| 13 Teretana, sediš na klupi | str. 7, „Teretana” |
+| 14 Grove Street u sumrak | str. 9, „San Andreas” |
+
+17. 11. (dokument (3)): scene su prenumerisane kao u dokumentu, pa su i slike preimenovane (`03.jpg` → `02.jpg` … `15.jpg` → `14.jpg`); svaka slika je ostala uz istu scenu.
 
 ## Preporuka za slike
 
@@ -70,4 +71,4 @@ natpisu u prezentaciji:
 ## Promptovi
 
 Promptovi scena su u `src/scenes.js`, preneti iz Word dokumenta „GTA promptovi za Nano
-Banana” (16. 11. 2026). Naziv, redosled i prompt scene menjaju se samo tamo.
+Banana (3)” (17. 11. 2026). Naziv, redosled i prompt scene menjaju se samo tamo.

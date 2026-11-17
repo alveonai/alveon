@@ -217,7 +217,7 @@ sessions(
   submitted_at INTEGER,  -- kada je fotografija poslata na odobrenje
   photo_key TEXT,        -- R2 ključ sa verzijom: photos/<id>/<vreme>-<nasumično>
   photo_aspect TEXT,     -- format fotografije (npr. "3:4"); koristi se samo ako scena nema svoj format
-  scene TEXT,            -- izabrana scena (src/scenes.js, "01".."15"); NULL = podrazumevani prompt (migrations/0002_scene.sql za staru bazu)
+  scene TEXT,            -- izabrana scena (src/scenes.js, "01".."14"); NULL = podrazumevani prompt (migrations/0002_scene.sql za staru bazu)
   result_key TEXT,       -- results/<id>/<broj pokušaja>
   result_mime TEXT,
   attempts INTEGER, max_attempts INTEGER (default 2),
@@ -318,32 +318,31 @@ Prethodni prompt (v2, ilustracija, bez imena igre) je u git istoriji (`src/promp
 
 ### 9.1 Scene (od 17. 11. 2026)
 
-Izvor: Word dokument agencije „GTA promptovi za Nano Banana” (16. 11. 2026). `src/scenes.js` je napravljen automatski iz dokumenta (bez prekucavanja): 15 scena, prompt svake doslovno, sa prelomima redova. **Scena 02 (GTA VI key art) izbačena 17. 11.** (odluka agencije: nema primer sliku, a prezentacija klijentu navodi 14 stilova); u aplikaciji je **14 scena**, ostale zadržavaju svoj broj (01, 03–15), a prva grupa se zove „GTA V”.
+Izvor: Word dokument agencije „GTA promptovi za Nano Banana (3)” (verzija od 17. 11. 2026, zamenila verziju od 16. 11.). `src/scenes.js` je napravljen automatski iz dokumenta (bez prekucavanja): **14 scena**, prompt svake doslovno, sa prelomima redova; **brojevi scena isti kao u dokumentu (01–14)**. Ranija verzija je imala 15 scena; scena 02 (GTA VI key art) izbačena je 17. 11. (odluka agencije), pa su ostale bile 01, 03–15. Nova verzija dokumenta je i sama prenumerisana, pa su prenumerisane i sličice (`03.jpg` → `02.jpg` … `15.jpg` → `14.jpg`). U novoj verziji promenjeni su promptovi svih scena osim 01 (dokument: 2, 3 i 13 su novi, ostalima su dodata pravila o broju likova i polu).
 
 | # | Scena | Likova | Format |
 |---|---|---|---|
 | 01 | GTA V: ulica u Los Santosu | 1 | 4:5 |
-| ~~02~~ | ~~GTA VI ilustracija (key art)~~ (izbačena) | 1 | 4:5 |
-| 03 | Motor, bežiš od policije | 1 | 3:4 |
-| 04 | Naslonjen na prozor auta | 1–2 | 3:4 |
-| 05 | Napeti susret u zadimljenom klubu | 1 | 16:9 |
-| 06 | Sa pit bulom kod ograde | 1 | 16:9 |
-| 07 | Benzinska pumpa noću | 1 | 16:9 |
-| 08 | Noćna vožnja | 1–2 | 16:9 |
-| 09 | Krupni plan, ruka preko lica | 1 | 16:9 |
-| 10 | Pljačka banke | 1–2 | 16:9 |
-| 11 | Kiša novca | 1 | 16:9 |
-| 12 | Kabriolet noću | 1–2 | 16:9 |
-| 13 | Ekipa u garaži | 1–4 | 16:9 |
-| 14 | Teretana, sediš na klupi | 1 | 3:4 |
-| 15 | Grove Street u sumrak | 1 | 16:9 |
+| 02 | Motor, bežiš od policije | 1 | 4:5 |
+| 03 | Naslonjen na prozor auta | 1–2 | 4:5 |
+| 04 | Napeti susret u zadimljenom klubu | 1 | 4:5 |
+| 05 | Sa pit bulom kod ograde | 1 | 4:5 |
+| 06 | Benzinska pumpa noću | 1 | 4:5 |
+| 07 | Noćna vožnja | 1–2 | 4:5 |
+| 08 | Krupni plan, ruka preko lica | 1 | 4:5 |
+| 09 | Pljačka banke | 1–2 | 4:5 |
+| 10 | Kiša novca | 1 | 4:5 |
+| 11 | Kabriolet noću | 1–2 | 4:5 |
+| 12 | Ekipa u garaži | 1–4 | 4:5 |
+| 13 | Teretana, sediš na klupi | 1 | 4:5 |
+| 14 | Grove Street u sumrak | 1 | 4:5 |
 
 - **Tok:** gost bira scenu → scena ide uz fotografiju (zaglavlje `x-scene`, server proverava da scena postoji, inače 400) → čuva se u `sessions.scene` → tablet prikazuje „Scena N: naziv (format)” na kartici i u listi → AI dobija prompt i format scene. Scena se menja **samo zajedno sa novom fotografijom** (nova verzija `photo_key`), pa osoblje uvek odobrava par fotografija + scena koji je videlo.
-- **Format:** iz prompta scene („Vertical 4:5”, „Horizontal 16:9”…), u skladu sa dokumentom („3, 4 i 14 su 3:4, ostali zadržavaju svoj format”). Ovo menja raniju odluku „izlaz = format ulaza” (9, gore).
+- **Format:** iz prompta scene („Vertical 4:5”); od verzije (3) dokumenta **sve scene su uspravne 4:5** (ranije 3:4 i 16:9). Ovo menja raniju odluku „izlaz = format ulaza” (9, gore).
 - **Jedna fotografija po gostu:** dokument predviđa i više fotografija za scene sa više likova (Slika 1 = Lik A…). Aplikacija šalje **jednu** fotografiju; prema pravilima samog dokumenta gost je tada Lik A, a ostali likovi su izmišljeni. Više fotografija po gostu (grupe) **nije urađeno** (rizik pred event).
-- **Mesta za popunu** „[npr. …]” u scenama 5, 6 i 12 (odeća) zamenjena su predloženom vrednošću iz dokumenta (npr. „Outfit: worn off-white t-shirt, black watch.”).
-- **Scena 15** po dokumentu traži HUD sa tekstom (sat, novac); varijante „bez HUD-a” i „PS2 izgled” iz dokumenta nisu posebne scene.
-- **Slike scena** (sličice za izbor): `public/scene/01.jpg` … `15.jpg`, dodaje agencija (uputstvo: `SLIKE_SCENA.md`). Bez slike: obojeno polje sa brojem (radi i tako). Javni API `GET /api/scenes` vraća naziv, grupu, format, broj likova i putanju slike, **bez promptova**.
+- **Mesta za popunu** „[npr. …]” u scenama 4, 5 i 11 (odeća) zamenjena su predloženom vrednošću iz dokumenta (npr. „Outfit: worn off-white t-shirt, black watch.”).
+- **Scena 14** po dokumentu traži HUD sa tekstom (sat, novac); varijante „bez HUD-a” i „PS2 izgled” iz dokumenta nisu posebne scene.
+- **Slike scena** (sličice za izbor): `public/scene/01.jpg` … `14.jpg`, dodaje agencija (uputstvo: `SLIKE_SCENA.md`). Bez slike: obojeno polje sa brojem (radi i tako). Javni API `GET /api/scenes` vraća naziv, grupu, format, broj likova i putanju slike, **bez promptova**.
 Prompt još **nije testiran** na pravom modelu (nema API ključa). **Test prompta je prvi zadatak čim postoji ključ**, jer od kvaliteta zavise ostale odluke:
 - 10–20 različitih fotografija: svetliji i tamniji ten, naočare, brada, marama ili kapa, dve osobe, slabo i mešovito svetlo kao u tržnom centru;
 - za svaku beležiti: prepoznatljivost (da/ne), odbijanje filtera (da/ne, razlog), **trajanje** (tipično i najsporije);
@@ -449,9 +448,10 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 11. **Billing uključen (14. 11.), prompt v3 na pravom Gemini-ju:** radi (agencija: „sve radi”), preko telefona i tunela.
 12. **Izbor scene (17. 11.):** e2e **67/67** (57 + 10 novih: lista od 15 scena bez promptova, putanja sličice, format 16:9/3:4, nepostojeća scena 400, scena vidljiva na tabletu sa nazivom i formatom, promena scene sa novom fotografijom, generisanje, scena u listi „gotovo”). U logu servera: scena 14 → `aspect=3:4` i njen prompt, scena 05 → `aspect=16:9` i njen prompt; bez scene → prompt v3. Browser (emulacija telefona 375×812 + tablet): pristanak → izbor scene → slikanje → čekanje (kod + naziv scene) → tablet „Scena 5: … (16:9)” → ✅ → gost dobija sliku; sličica se prikazuje kad `/scene/05.jpg` postoji, bez nje obojeno polje bez ikonice greške. U konzoli samo 404 za sličice koje još ne postoje. `e2e-failures.mjs` nije ponovo pokrenut (logika grešaka nije menjana).
 13. **Postavljanje na Cloudflare (17. 11.):** https://gta-booth.gta-booth.workers.dev. D1 `gta-booth-db` (eeur, tabele i kolona `scene` provereni), R2 `gta-booth-photos` (eeur), Queue `gta-booth-jobs`, cron */5. Tajne `GEMINI_API_KEY` (iz `.dev.vars`, nije prikazan) i `ADMIN_PIN` (novi, uneo ga je korisnik). `PROVIDER=gemini`, `DAILY_LIMIT=450`, rukovalac „Petar Popović PR Beograd (Alveon)”, info@alveonai.com. Provereno bez generisanja: `/api/config` (demo:false, naziv, e-mail), `/api/scenes` (14, bez promptova), sličice, `/admin`, `/qr` (QR vodi na stalnu adresu), `/privatnost`, pogrešan PIN → 401. Lokalno posle promene `database_id`: `npm run db:local`, e2e 67/67.
+14. **Novi promptovi, dokument (3) (17. 11.):** 13 od 14 promptova promenjeno, sve scene 4:5, brojevi 01–14 kao u dokumentu, sličice prenumerisane. e2e **67/67** (provere scena prilagođene: brojevi 01–14, svi 4:5, scena 04 „klub”, promena na 13). U logu: scena 13 → `aspect=4:5` i njen prompt. Telefon (375×812): 14 sličica učitano, svaka pod svojim naslovom. Postavljeno na Cloudflare (verzija e6d40312), `/api/scenes` vraća 01–14 (4:5), sličice 02/13/14 iste veličine kao lokalno, `/scene/15.jpg` 404.
 
 **Nije testirano:**
-- **scene na pravom Gemini-ju** (kvalitet, prepoznatljivost, odbijanja zbog imena igre i scena sa policijom/novcem, trajanje, poštovanje formata 16:9);
+- **scene na pravom Gemini-ju** (kvalitet, prepoznatljivost, odbijanja zbog imena igre i scena sa policijom/novcem, trajanje, poštovanje formata 4:5);
 - pravo generisanje: stvarni Gemini limiti plaćenog nivoa;
 - telefoni: jedan telefon agencije prošao (9); preostalo: drugi OS (iOS/Android), Google Lens, Instagram in-app browser;
 - produkcijski Cloudflare: pravo generisanje na produkciji (CPU, Queues, cron); adresa je `*.workers.dev`, bez sopstvenog domena;
@@ -479,9 +479,9 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | R11 | Ograničenje pokušaja prijave je globalno: napadač može privremeno blokirati prijavu osoblja. | Malo verovatno za jedno veče. |
 | R12 | Nova fotografija dok gost čeka pomera ga na kraj reda. | Namerno jednostavno. |
 | R22 | Bez objave na mrežama (3.7): agencija nema slike za svoje kanale. | Odluka agencije. |
-| R25 | Scene imenuju igru i izdavača (GTA V/VI, San Andreas, Rockstar, Vice City, Los Santos) i opisuju policiju, pljačku, novac. Moguća odbijanja filtera i zaštićeni elementi na slikama (npr. HUD scene 15). | Promptovi agencije, doslovno (odluka agencije). Sve scene osim 15 traže „No HUD, no text” i zabranjuju oružje, krv, alkohol. Proveriti svaku scenu bar jednom na pravom Gemini-ju pre eventa; scenu koja se odbija ili daje loš rezultat skloniti iz `src/scenes.js`. |
+| R25 | Scene imenuju igru i izdavača (GTA V/VI, San Andreas, Rockstar, Vice City, Los Santos) i opisuju policiju, pljačku, novac. Moguća odbijanja filtera i zaštićeni elementi na slikama (npr. HUD scene 14). | Promptovi agencije, doslovno (odluka agencije). Sve scene osim 14 traže „No HUD, no text” i zabranjuju oružje, krv, alkohol. Proveriti svaku scenu bar jednom na pravom Gemini-ju pre eventa; scenu koja se odbija ili daje loš rezultat skloniti iz `src/scenes.js`. |
 | R26 | Scene sa više likova: gost šalje jednu fotografiju; ostali likovi su izmišljeni. Gost u grupi može očekivati da budu svi. | Oznaka na kartici „ti + izmišljeni partner/ekipa”; savet „samo jedna osoba na slici”. Više fotografija po gostu nije urađeno. |
-| R27 | Sličice scena: 14 od 15 preuzeto iz prezentacije za klijenta (17. 11., uparivanje u `SLIKE_SCENA.md`); **scena 02 (key art) nije imala sliku i izbačena je**. Natpisi u prezentaciji se delom razlikuju od naziva scena u aplikaciji (npr. „Kazino” = Kiša novca, „Noćna potera” = Motor), broj stilova se sada poklapa (14). | Bez slike radi (obojeno polje sa brojem). Sliku za 02 šalje agencija. Posle dodavanja slika na Cloudflare: ponovo `npm run deploy`. |
+| R27 | Sličice scena: 14 od 15 preuzeto iz prezentacije za klijenta (17. 11., uparivanje u `SLIKE_SCENA.md`); **scena key art nije imala sliku i izbačena je**; od dokumenta (3) brojevi su 01–14. Natpisi u prezentaciji se delom razlikuju od naziva scena u aplikaciji (npr. „Kazino” = Kiša novca, „Noćna potera” = Motor), broj stilova se sada poklapa (14). | Bez slike radi (obojeno polje sa brojem). Posle dodavanja slika na Cloudflare: ponovo `npm run deploy`. |
 | R23 | Najbliži podržani format nije uvek tačan format fotografije (npr. 1080×1350 je tačno 4:5, ali neobičan format se zaokružuje). | Razlika je mala; slika se ne seče, model kadrira u izabranom formatu. |
 | R13 | Nema serverske provere da je na slici jedna punoletna osoba; oslanja se na osoblje. | Svesna odluka. |
 | R14 | „Obriši sve podatke” je nepovratno. | Potvrda upisom reči. |
@@ -525,7 +525,7 @@ Lokalno (`wrangler dev`, Cloudflare runtime „workerd” sa lokalnim D1/R2/Queu
 | Sub 14. 11. | ✅ Aplikacija v1; plan; prva nezavisna recenzija; ✅ izmene v2 (trke, Queues, 429/503, QR za preuzimanje, prompt) i testovi; ✅ lokalno na računaru agencije (57/57, ručni test, telefon preko tunela); ✅ ključ besplatnog nivoa: kvota za slike 0 (14, tačka 10); ✅ prompt v3 (agencija) |
 | Ned 15. 11. | **Prvo:** uključiti billing na Google projektu (bez njega nema slika), logovanje isključeno → **test prompta v3** (10–20 slika, trajanje, odbijanja, logo/oružje) i **provera Gemini limita**. Zatim Cloudflare nalog (Workers Paid), postavljanje, provera Queues i CPU na produkciji. |
 | Pon 16. 11. | Test na pravim telefonima (uputstvo: `TESTIRANJE.md`): iOS Safari, Android Chrome, iOS kamera → QR, Google Lens, Instagram in-app; 10–20 ljudi zaredom; pravnik pregleda tekstove; domen |
-| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67; ✅ sličice iz prezentacije; ✅ scena 02 izbačena (14 scena); ✅ **postavljeno na Cloudflare** (14, tačka 13), limit 450. Odloženo (agencija): test svake scene na pravom Gemini-ju i ispravka promptova. Zatim: jedna probna slika na produkciji, isključiti logovanje u AI Studiju, štampa novog QR-a, proba u tržnom centru (signal, ring svetlo) |
+| Uto 17. 11. | ✅ Izbor scene (15 scena iz dokumenta agencije), testovi 67/67; ✅ sličice iz prezentacije; ✅ scena 02 izbačena (14 scena); ✅ **postavljeno na Cloudflare** (14, tačka 13), limit 450; ✅ novi promptovi iz dokumenta (3), sve 4:5, postavljeno. Odloženo (agencija): test svake scene na pravom Gemini-ju i ispravka promptova. Zatim: jedna probna slika na produkciji, isključiti logovanje u AI Studiju, štampa novog QR-a, proba u tržnom centru (signal, ring svetlo) |
 | Sre 18. 11. | Event |
 
 **Rezervni plan:** ako aplikacija nije stabilna do ponedeljka uveče, osoblje ručno generiše slike i deli ih gostima.
