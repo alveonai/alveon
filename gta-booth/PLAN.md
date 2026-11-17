@@ -322,20 +322,20 @@ Izvor: Word dokument agencije „GTA promptovi za Nano Banana (3)” (verzija od
 
 | # | Scena | Likova | Format |
 |---|---|---|---|
-| 01 | GTA V: ulica u Los Santosu | 1 | 4:5 |
-| 02 | Motor, bežiš od policije | 1 | 4:5 |
-| 03 | Naslonjen na prozor auta | 1–2 | 4:5 |
-| 04 | Napeti susret u zadimljenom klubu | 1 | 4:5 |
-| 05 | Sa pit bulom kod ograde | 1 | 4:5 |
-| 06 | Benzinska pumpa noću | 1 | 4:5 |
-| 07 | Noćna vožnja | 1–2 | 4:5 |
-| 08 | Krupni plan, ruka preko lica | 1 | 4:5 |
-| 09 | Pljačka banke | 1–2 | 4:5 |
-| 10 | Kiša novca | 1 | 4:5 |
-| 11 | Kabriolet noću | 1–2 | 4:5 |
-| 12 | Ekipa u garaži | 1–4 | 4:5 |
-| 13 | Teretana, sediš na klupi | 1 | 4:5 |
-| 14 | Grove Street u sumrak | 1 | 4:5 |
+| 01 | GTA V: ulica u Los Santosu | 1 | 3:4 |
+| 02 | Motor, bežiš od policije | 1 | 3:4 |
+| 03 | Naslonjen na prozor auta | 1–2 | 3:4 |
+| 04 | Napeti susret u zadimljenom klubu | 1 | 3:4 |
+| 05 | Sa pit bulom kod ograde | 1 | 3:4 |
+| 06 | Benzinska pumpa noću | 1 | 3:4 |
+| 07 | Noćna vožnja | 1–2 | 3:4 |
+| 08 | Krupni plan, ruka preko lica | 1 | 3:4 |
+| 09 | Pljačka banke | 1–2 | 3:4 |
+| 10 | Kiša novca | 1 | 3:4 |
+| 11 | Kabriolet noću | 1–2 | 3:4 |
+| 12 | Ekipa u garaži | 1–4 | 3:4 |
+| 13 | Teretana, sediš na klupi | 1 | 3:4 |
+| 14 | Grove Street u sumrak | 1 | 3:4 |
 
 - **Tok:** gost bira scenu → scena ide uz fotografiju (zaglavlje `x-scene`, server proverava da scena postoji, inače 400) → čuva se u `sessions.scene` → tablet prikazuje „Scena N: naziv (format)” na kartici i u listi → AI dobija prompt i format scene. Scena se menja **samo zajedno sa novom fotografijom** (nova verzija `photo_key`), pa osoblje uvek odobrava par fotografija + scena koji je videlo.
 - **Format:** iz prompta scene. **Sve scene su 3:4** (odluka agencije 17. 11.): dokument (3) piše 4:5, pa generator u promptu menja samo „4:5” u „3:4” (ostatak prompta doslovno). Ranije: 4:5, pre toga 3:4 i 16:9. Ovo menja raniju odluku „izlaz = format ulaza” (9, gore).
