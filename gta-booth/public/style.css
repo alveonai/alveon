@@ -180,3 +180,11 @@ input[type="file"] { display: none; }
   font: inherit; font-weight: 800; font-size: 15px; color: var(--yellow); background: none;
   border: 0; padding: 10px 6px; cursor: pointer; text-decoration: underline;
 }
+
+/* Partneri (Ušće × Alveon) */
+.partners { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 18px; border-top: 1px solid var(--line); }
+.partners .usce-badge { background: #fff; border-radius: 8px; padding: 4px 6px; display: inline-flex; }
+.partners .usce-badge img { height: 40px; width: auto; display: block; }
+.partners .x { font-size: 18px; color: var(--muted); }
+.partners .alveon { height: 22px; width: auto; display: block; }
+.powered { margin: 8px 0 10px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }

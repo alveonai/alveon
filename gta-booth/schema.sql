@@ -18,11 +18,13 @@ CREATE TABLE IF NOT EXISTS sessions (
   attempts      INTEGER NOT NULL DEFAULT 0,
   max_attempts  INTEGER NOT NULL DEFAULT 2,
   started_at    INTEGER,
-  error         TEXT
+  error         TEXT,
+  device        TEXT                        -- nasumični ID telefona gosta (brojač ponovnih generacija)
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status, submitted_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_created ON sessions(created_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_device ON sessions(device);
 
 CREATE TABLE IF NOT EXISTS usage (
   day   TEXT PRIMARY KEY,                   -- YYYY-MM-DD (Beograd)

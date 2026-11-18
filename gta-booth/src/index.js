@@ -292,10 +292,12 @@ async function handleGuest(request, env, path) {
     const code = randomCode();
     const t = now();
     const social = socialEnabled(env) && body.social === true ? 1 : 0;
+    // Nasumični ID telefona (localStorage gosta) – samo da štand vidi da isti telefon generiše ponovo.
+    const device = typeof body.device === 'string' && /^[a-z0-9]{16,40}$/i.test(body.device) ? body.device : null;
     await env.DB.prepare(
-      `INSERT INTO sessions (id, code, status, created_at, updated_at, consent_at, consent_social, age_confirmed, max_attempts)
-       VALUES (?, ?, 'created', ?, ?, ?, ?, 1, ?)`,
-    ).bind(id, code, t, t, t, social, num(env.MAX_ATTEMPTS, 2)).run();
+      `INSERT INTO sessions (id, code, status, created_at, updated_at, consent_at, consent_social, age_confirmed, max_attempts, device)
+       VALUES (?, ?, 'created', ?, ?, ?, ?, 1, ?, ?)`,
+    ).bind(id, code, t, t, t, social, num(env.MAX_ATTEMPTS, 2), device).run();
     return json({ id, code });
   }
 
@@ -397,10 +399,14 @@ async function handleAdmin(request, env, path) {
     await expirePending(env); // lenjo istekni stare zahteve
 
     const pending = await env.DB.prepare(
-      "SELECT id, code, submitted_at, consent_social, photo_key, photo_aspect, scene FROM sessions WHERE status = 'pending' ORDER BY submitted_at ASC LIMIT 60",
+      `SELECT id, code, submitted_at, consent_social, photo_key, photo_aspect, scene,
+       (SELECT COUNT(*) FROM sessions p WHERE p.device = sessions.device AND p.id <> sessions.id AND p.attempts > 0) AS prior
+       FROM sessions WHERE status = 'pending' ORDER BY submitted_at ASC LIMIT 60`,
     ).all();
     const recent = await env.DB.prepare(
-      `SELECT id, code, status, attempts, max_attempts, error, updated_at, consent_social, scene
+      `SELECT id, code, status, attempts, max_attempts, error, updated_at, consent_social, scene,
+       (SELECT COUNT(*) FROM sessions p WHERE p.device = sessions.device AND p.id <> sessions.id AND p.attempts > 0
+          AND p.created_at < sessions.created_at) AS prior
        FROM sessions WHERE status IN ('approved','generating','done','failed','limit')
        ORDER BY updated_at DESC LIMIT 40`,
     ).all();

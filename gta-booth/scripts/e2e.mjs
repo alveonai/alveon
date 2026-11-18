@@ -243,6 +243,38 @@ q6 = await call('/api/admin/queue', { token });
 check('scena vidljiva i u listi "gotovo"', q6.data.recent.some((x) => x.id === s6.id && x.scene === '13' && x.scene_title));
 console.log('    SCENE_CHECK_LOG: u logu servera treba "mock generate aspect=3:4 prompt=Use the person in the uploaded photo"');
 
+// --- ponovne generacije sa istog telefona ---
+console.log('Ponovne generacije (isti telefon)');
+{
+  const dev = 'e2e' + Date.now().toString(36) + 'abcdefghij';
+  const d1 = await newSession({ device: dev });
+  await upload(d1.id, fakeJpeg(4000, 41));
+  r = await call('/api/admin/queue', { token });
+  check('prvi put: nema oznake ponovne generacije', r.data.pending.find((p) => p.id === d1.id)?.prior === 0);
+  await decide('approve', d1.id, token);
+  await waitStatus(d1.id, ['done', 'failed']);
+  const d2 = await newSession({ device: dev });
+  await upload(d2.id, fakeJpeg(4000, 42));
+  r = await call('/api/admin/queue', { token });
+  check('drugi put sa istog telefona: prior = 1', r.data.pending.find((p) => p.id === d2.id)?.prior === 1, JSON.stringify(r.data.pending));
+  await decide('approve', d2.id, token);
+  await waitStatus(d2.id, ['done', 'failed']);
+  const d3 = await newSession({ device: dev });
+  await upload(d3.id, fakeJpeg(4000, 43));
+  r = await call('/api/admin/queue', { token });
+  check('treći put: prior = 2', r.data.pending.find((p) => p.id === d3.id)?.prior === 2);
+  check('lista "gotovo": druga slika ima prior = 1', r.data.recent.find((x) => x.id === d2.id)?.prior === 1);
+  const other = await newSession({ device: 'drugitelefon' + Date.now().toString(36) });
+  await upload(other.id, fakeJpeg(4000, 44));
+  r = await call('/api/admin/queue', { token });
+  check('drugi telefon: bez oznake', r.data.pending.find((p) => p.id === other.id)?.prior === 0);
+  const bad = await newSession({ device: '<script>' });
+  await upload(bad.id, fakeJpeg(4000, 45));
+  r = await call('/api/admin/queue', { token });
+  check('nevažeći ID telefona se ignoriše', r.data.pending.find((p) => p.id === bad.id)?.prior === 0);
+  for (const x of [d3, other, bad]) await decide('reject', x.id, token);
+}
+
 // --- pauza ---
 console.log('Pauza');
 r = await call('/api/admin/pause', { method: 'POST', token, body: { paused: true } });

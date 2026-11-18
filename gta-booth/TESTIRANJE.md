@@ -41,6 +41,8 @@ Kad piše `Ready on http://localhost:8787`, otvorite dva prozora u browseru:
 - [ ] Gost: „Sačuvaj sliku”, osvežavanje stranice (ostaje na slici)
 - [ ] Tablet: „QR za preuzimanje” i „⬇ Preuzmi” kod gotove slike (preuzima punu sliku za štampu)
 - [ ] Gost: na gotovoj slici „↩ Napravi novu sliku” vraća na pristanak i novu scenu
+- [ ] Tablet: druga slika sa istog telefona ima narandžast kod i „Već generisao 1×”, treća crven
+- [ ] Gost: na dnu ekrana logotipi Ušće × Alveon i „powered by Alveon”
 - [ ] Tablet ❌: gost vidi „Fotografija nije odobrena” i može ponovo
 - [ ] Tablet „Pauziraj”: novi gost ne može da počne
 - [ ] Gost „Obriši moje podatke”
@@ -82,7 +84,7 @@ Dok `npm run dev` radi, u drugom terminalu:
 BASE=http://127.0.0.1:8787 PIN=123456 npm run test:e2e
 ```
 
-Očekivano: `68 prošlo, 0 palo`. (Windows PowerShell:
+Očekivano: `74 prošlo, 0 palo`. (Windows PowerShell:
 `$env:BASE="http://127.0.0.1:8787"; $env:PIN="123456"; npm run test:e2e`)
 
 Testovi grešaka, limita i Google 429 su u `README.md`.

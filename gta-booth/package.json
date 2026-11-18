@@ -12,6 +12,8 @@
     "db:remote": "wrangler d1 execute gta-booth-db --remote --file=schema.sql",
     "db:migrate:local": "wrangler d1 execute gta-booth-db --local --file=migrations/0002_scene.sql",
     "db:migrate:remote": "wrangler d1 execute gta-booth-db --remote --file=migrations/0002_scene.sql",
+    "db:migrate3:local": "wrangler d1 execute gta-booth-db --local --file=migrations/0003_device.sql",
+    "db:migrate3:remote": "wrangler d1 execute gta-booth-db --remote --file=migrations/0003_device.sql",
     "deploy": "wrangler deploy",
     "test:e2e": "node scripts/e2e.mjs"
   },

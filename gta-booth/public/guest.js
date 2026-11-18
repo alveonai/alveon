@@ -45,6 +45,18 @@
     try { return localStorage.getItem(key); } catch (_) { return null; }
   }
 
+  // Nasumični ID ovog telefona; ostaje i kad gost počne ispočetka, da štand vidi ponovne generacije.
+  function deviceId() {
+    let d = load('gta_device');
+    if (!d || !/^[a-z0-9]{16,40}$/i.test(d)) {
+      const a = new Uint8Array(12);
+      crypto.getRandomValues(a);
+      d = Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
+      store('gta_device', d);
+    }
+    return d;
+  }
+
   function setSession(id, code) {
     sessionId = id;
     sessionCode = code || '';
@@ -208,6 +220,7 @@
           age: $('c-age').checked,
           consent: $('c-consent').checked,
           social: !$('socialRow').classList.contains('hidden') && $('c-social').checked,
+          device: deviceId(),
         }),
       });
       setSession(data.id, data.code);

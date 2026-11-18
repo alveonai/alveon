@@ -139,6 +139,7 @@
         el.innerHTML =
           '<img alt="Fotografija gosta">' +
           '<div class="code center"></div>' +
+          '<div class="repeat-tag hidden"></div>' +
           '<div class="scene-tag"></div>' +
           '<div class="meta"></div>' +
           '<div class="actions">' +
@@ -163,6 +164,13 @@
           setTimeout(() => el.classList.remove('new'), 6000);
         }
       }
+      // Ponovna generacija sa istog telefona: kod menja boju + broj prethodnih slika.
+      const prior = Number(p.prior) || 0;
+      el.classList.toggle('repeat1', prior === 1);
+      el.classList.toggle('repeat2', prior >= 2);
+      const rt = el.querySelector('.repeat-tag');
+      rt.classList.toggle('hidden', prior === 0);
+      rt.textContent = prior ? '⚠ Već generisao ' + prior + '× – ovo bi bila ' + (prior + 1) + '. slika' : '';
       // Scena se menja samo zajedno sa fotografijom, pa uvek odgovara prikazanoj verziji.
       el.querySelector('.scene-tag').textContent = sceneText(p);
       el.querySelector('.meta').textContent =
@@ -196,6 +204,14 @@
       const tdCode = document.createElement('td');
       tdCode.className = 'c';
       tdCode.textContent = r.code;
+      const prior = Number(r.prior) || 0;
+      if (prior > 0) {
+        tdCode.classList.add(prior >= 2 ? 'repeat2' : 'repeat1');
+        const n = document.createElement('div');
+        n.className = 'repeat-small';
+        n.textContent = (prior + 1) + '. slika ovog gosta';
+        tdCode.appendChild(n);
+      }
       const sc = document.createElement('div');
       sc.className = 'scene-small';
       sc.textContent = sceneText(r);
