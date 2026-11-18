@@ -115,7 +115,8 @@
     img.src = sc.image;
   }
 
-  const extraLabel = (n) => (n >= 3 ? 'ti + izmišljena ekipa' : n === 2 ? 'ti + izmišljeni partner' : '');
+  const extraLabel = (sc) => (sc.people ? 'grupna: ' + sc.people.replace('-', '–') + ' osobe na jednoj slici'
+    : sc.maxChars >= 3 ? 'ti + izmišljena ekipa' : sc.maxChars === 2 ? 'ti + izmišljeni partner' : '');
 
   async function loadScenes() {
     try {
@@ -159,7 +160,7 @@
       title.className = 'scene-title';
       title.textContent = sc.title;
       body.appendChild(title);
-      const extra = extraLabel(sc.maxChars);
+      const extra = extraLabel(sc);
       if (extra) {
         const ex = document.createElement('span');
         ex.className = 'scene-extra';
@@ -209,6 +210,8 @@
   }
 
   async function submitConsent() {
+    // Gost se vratio „Nazad” sa izbora scene: sesija već postoji, ne pravimo novu.
+    if (sessionId && [null, 'created', 'pending', 'rejected', 'expired'].includes(lastStatus)) return showScenePicker();
     const btn = $('b-consent');
     btn.disabled = true;
     $('e-consent').classList.add('hidden');
@@ -237,6 +240,9 @@
 
   function showCapture(errorText) {
     if (!sceneById.has(sceneId)) return showScenePicker();
+    const group = Boolean(sceneById.get(sceneId).people);
+    $('tips-single').classList.toggle('hidden', group);
+    $('tips-group').classList.toggle('hidden', !group);
     photoBlob = null;
     $('previewBox').classList.add('hidden');
     $('f-camera').value = '';
@@ -306,6 +312,7 @@
       startPolling();
     } catch (e) {
       if (e.status === 404) return restart();
+      if (e.status === 409) { await poll(); startPolling(); return; } // osoblje je već odobrilo prethodnu fotografiju
       $('e-capture').textContent = e.message || 'Slanje nije uspelo. Proveri internet i pokušaj ponovo.';
       $('e-capture').classList.remove('hidden');
     } finally {
@@ -486,6 +493,11 @@
     $('b-restart').addEventListener('click', restart);
     $('b-delete').addEventListener('click', deleteMyData);
     $('b-scene-change').addEventListener('click', showScenePicker);
+    // Dugmad „Nazad”: pristanak ← scena ← slikanje ← čekanje. Tokom generisanja nema nazad (slika se već pravi).
+    $('back-scene').addEventListener('click', () => { updateConsentButton(); show('consent'); });
+    $('back-capture').addEventListener('click', showScenePicker);
+    $('back-pending').addEventListener('click', () => { stopPolling(); showCapture(); });
+    $('b-again-scene').addEventListener('click', showScenePicker);
 
     const [cfg] = await Promise.all([loadConfig(), loadScenes()]);
     // Izbor scene preživljava osvežavanje stranice pre slanja fotografije.

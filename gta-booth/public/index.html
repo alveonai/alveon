@@ -54,6 +54,7 @@
 
     <!-- Izbor scene -->
     <section id="v-scene" class="card hidden">
+      <button class="back-btn" id="back-scene" type="button">← Nazad</button>
       <h2>Izaberi scenu</h2>
       <p class="muted">Dodirni scenu u kojoj želiš da se nađeš.</p>
       <div id="sceneList"></div>
@@ -62,16 +63,22 @@
 
     <!-- Slikanje -->
     <section id="v-capture" class="card hidden">
+      <button class="back-btn" id="back-capture" type="button">← Nazad na scene</button>
       <div class="chosen" id="chosenScene">
         <div class="chosen-thumb"><img alt=""><span class="ph-num"></span></div>
         <div class="chosen-text"><small>Tvoja scena</small><b class="chosen-title"></b></div>
         <button class="link-btn" id="b-scene-change" type="button">Promeni</button>
       </div>
       <h2>Slikaj se</h2>
-      <ul class="tips">
+      <ul class="tips" id="tips-single">
         <li>Gledaj pravo u kameru, lice dobro osvetljeno</li>
         <li>Bez naočara i kape, lice neka zauzme dobar deo kadra</li>
         <li>Samo jedna osoba na slici</li>
+      </ul>
+      <ul class="tips hidden" id="tips-group">
+        <li><b>Na slici 2, 3 ili 4 osobe</b>, niko drugi u kadru</li>
+        <li>Svi gledaju u kameru, lica dobro osvetljena</li>
+        <li>Stanite blizu jedni drugima, da lica budu krupna</li>
       </ul>
       <label class="btn" for="f-camera">📸 Otvori kameru</label>
       <label class="btn secondary small" for="f-gallery">Izaberi iz galerije</label>
@@ -87,6 +94,7 @@
 
     <!-- Čeka odobrenje -->
     <section id="v-pending" class="card center hidden">
+      <button class="back-btn" id="back-pending" type="button">← Nazad</button>
       <h2>Čeka se potvrda sa štanda</h2>
       <p class="muted">Pokaži ovaj kod osoblju:</p>
       <div class="code" id="code-pending">···</div>
@@ -122,6 +130,7 @@
       <h2>Fotografija nije odobrena</h2>
       <p class="muted">Pokušaj ponovo, uz savete osoblja na štandu.</p>
       <button class="btn" id="b-again">Slikaj ponovo</button>
+      <button class="btn secondary small" id="b-again-scene">Izaberi drugu scenu</button>
     </section>
 
     <!-- Greška / limit / isteklo / pauza -->
