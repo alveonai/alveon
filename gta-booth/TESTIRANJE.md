@@ -44,7 +44,7 @@ Kad piše `Ready on http://localhost:8787`, otvorite dva prozora u browseru:
 - [ ] Tablet: druga slika sa istog telefona ima narandžast kod i „Već generisao 1×”, treća crven
 - [ ] Gost: na dnu ekrana logotipi Ušće × Alveon i „powered by Alveon”
 - [ ] Gost: „← Nazad” na izboru scene, slikanju i čekanju; posle povratka na pristanak „Nastavi” radi
-- [ ] Scena 15 (grupna): saveti „2, 3 ili 4 osobe”; probna slika sa 2–4 osobe na pravom Gemini-ju
+- [ ] Scena 15 (sam ili sa ekipom): saveti „1 do 4 osobe”; probna slika sa 1 i sa 3–4 osobe na pravom Gemini-ju
 - [ ] Tablet ❌: gost vidi „Fotografija nije odobrena” i može ponovo
 - [ ] Tablet „Pauziraj”: novi gost ne može da počne
 - [ ] Gost „Obriši moje podatke”

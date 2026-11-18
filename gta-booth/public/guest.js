@@ -115,7 +115,7 @@
     img.src = sc.image;
   }
 
-  const extraLabel = (sc) => (sc.people ? 'grupna: ' + sc.people.replace('-', '–') + ' osobe na jednoj slici'
+  const extraLabel = (sc) => (sc.people ? 'sam ili sa ekipom: ' + sc.people.replace('-', '–') + ' osobe na jednoj slici'
     : sc.maxChars >= 3 ? 'ti + izmišljena ekipa' : sc.maxChars === 2 ? 'ti + izmišljeni partner' : '');
 
   async function loadScenes() {

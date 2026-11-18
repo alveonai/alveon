@@ -26,7 +26,7 @@ Ime fajla = broj scene sa dve cifre, format **JPG**:
 | `12.jpg` | Ekipa u garaži |
 | `13.jpg` | Teretana, sediš na klupi |
 | `14.jpg` | Grove Street u sumrak |
-| `15.jpg` | Grupni poster: krov u Vice City-ju (2–4 osobe) |
+| `15.jpg` | Poster: krov u Vice City-ju (1–4 osobe) |
 
 Pazite na ime: `05.jpg`, ne `5.jpg`, ne `05.JPG.jpg`, ne `05.png`. (Ako Windows krije
 ekstenzije: u Explorer-u **View → Show → File name extensions**.)
@@ -53,7 +53,7 @@ natpisu u prezentaciji:
 | 12 Ekipa u garaži | str. 8, „Ekipa” |
 | 13 Teretana, sediš na klupi | str. 7, „Teretana” |
 | 14 Grove Street u sumrak | str. 9, „San Andreas” |
-| 15 Grupni poster (krov) | primer koji je agencija poslala 18. 11. (nije iz dokumenta) |
+| 15 Poster: krov u Vice City-ju | primer koji je agencija poslala 18. 11. (nije iz dokumenta) |
 
 17. 11. (dokument (3)): scene su prenumerisane kao u dokumentu, pa su i slike preimenovane (`03.jpg` → `02.jpg` … `15.jpg` → `14.jpg`); svaka slika je ostala uz istu scenu.
 
